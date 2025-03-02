@@ -18,9 +18,16 @@ const Doors = ({
     hasActiveWardrobe 
 }: DoorsProps) => {
     const wardrobeOptions = [
-        { id: 1, name: "Single Door" },
-        { id: 2, name: "Double Door" },
-        { id: 3, name: "Single Block" },
+        { 
+            id: 1, 
+            name: "Single Door", 
+            image: "https://www.tomeasure.co.uk/wp-content/themes/hello-theme-child-master/configurator-library/assets/thumbnails/door_styles/cairo_door_style_thumbnail.jpg"
+        },
+        { 
+            id: 2, 
+            name: "Storage Block", 
+            image: "https://www.tomeasure.co.uk/wp-content/themes/hello-theme-child-master/configurator-library/assets/thumbnails/door_styles/cairo_door_style_thumbnail.jpg"
+        }
     ];
 
     const handleOptions = [
@@ -53,10 +60,34 @@ const Doors = ({
                         style={{ 
                             border: selectedOption === option.id ? "2px solid #e38c6e" : "none", 
                             width: "6rem", 
-                            height: "6rem" 
+                            height: "6rem",
+                            position: "relative",
+                            overflow: "hidden"
                         }}
                     >
-                        <p>{option.name}</p>
+                        <img 
+                            src={option.image} 
+                            alt={option.name}
+                            style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover"
+                            }}
+                        />
+                        <p style={{
+                            position: "absolute",
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            background: "rgba(0,0,0,0.7)",
+                            color: "white",
+                            margin: 0,
+                            padding: "4px",
+                            fontSize: "0.8rem",
+                            textAlign: "center"
+                        }}>
+                            {option.name}
+                        </p>
                     </div>
                 ))}
             </div>

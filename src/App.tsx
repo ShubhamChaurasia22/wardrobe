@@ -174,9 +174,18 @@ const App = () => {
 
     return (
         <div className="container" style={{ width: "100vw", height: "fit-content", background: "whitesmoke" }}>
-            <Canvas className="canvas" style={canvasStyle}>
+            <Canvas
+                shadows
+                camera={{ position: [0, 0, 5], fov: 50 }}
+                className="canvas" style={canvasStyle}
+            >
+                <color attach="background" args={['#f0f0f0']} />
                 <ambientLight intensity={0.5} />
-                <directionalLight position={[5, 5, 5]} />
+                <directionalLight
+                    position={[10, 10, 10]}
+                    intensity={1}
+                    castShadow
+                />
                 <Room 
                     {...dimensions} 
                     view={view} 

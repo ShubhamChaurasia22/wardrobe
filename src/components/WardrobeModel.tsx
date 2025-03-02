@@ -16,7 +16,8 @@ const WardrobeModel = ({ modelType, handleType = 'straight', isActive = false }:
     const woodMaterial = new THREE.MeshStandardMaterial({
         map: woodTexture,
         metalness: 0.2,
-        roughness: 0.8
+        roughness: 0.8,
+        color: 0xA0522D  // Add a base color to make wood more visible
     });
 
     const handleMaterial = new THREE.MeshStandardMaterial({
@@ -30,6 +31,22 @@ const WardrobeModel = ({ modelType, handleType = 'straight', isActive = false }:
     const outlineMaterial = new THREE.MeshBasicMaterial({
         color: '#e38c6e',
         wireframe: true
+    });
+
+    // Add border material
+    const borderMaterial = new THREE.MeshStandardMaterial({
+        color: 0x333333,
+        metalness: 0.5,    // Increased metalness
+        roughness: 0.3,    // Decreased roughness
+        emissive: 0x111111 // Add slight emissive effect
+    });
+
+    // Add shadow material
+    const shadowMaterial = new THREE.MeshStandardMaterial({
+        color: 0x000000,
+        transparent: true,
+        opacity: 0.3,      // Increased opacity
+        side: THREE.DoubleSide // Show shadow on both sides
     });
 
     const createHandle = (position: [number, number, number]) => {
@@ -86,13 +103,29 @@ const WardrobeModel = ({ modelType, handleType = 'straight', isActive = false }:
         }
     };
 
-    // Modify renderModel to show outline when active
+    // Add lighting helper function
+    const addLighting = () => (
+        <>
+            <ambientLight intensity={0.5} />
+            <directionalLight 
+                position={[5, 5, 5]} 
+                intensity={1} 
+                castShadow 
+            />
+            <pointLight 
+                position={[-5, 0, 5]} 
+                intensity={0.5} 
+            />
+        </>
+    );
+
+    // Update the renderModel function to include lighting
     const renderModel = () => {
         switch (modelType) {
-            case 1: // Single door
+            case 1: // Single Door Wardrobe (full height)
                 return (
                     <group rotation={[0, Math.PI, 0]}>
-                        {/* Frame */}
+                        {/* Main Frame */}
                         <mesh material={woodMaterial}>
                             <boxGeometry args={[1, 2.4, 0.6]} />
                         </mesh>
@@ -100,66 +133,37 @@ const WardrobeModel = ({ modelType, handleType = 'straight', isActive = false }:
                         <mesh position={[0.49, 0, 0]} material={woodMaterial}>
                             <boxGeometry args={[0.02, 2.35, 0.55]} />
                         </mesh>
-                        {/* Handle */}
                         {createHandle([0.5, 0, 0])}
-                        {isActive && (
-                            <mesh material={outlineMaterial} scale={[1.02, 1.02, 1.02]}>
-                                <boxGeometry args={[1, 2.4, 0.6]} />
-                            </mesh>
-                        )}
-                    </group>
-                );
-            case 2: // Double door (takes 2 sections)
-                return (
-                    <group rotation={[0, Math.PI, 0]}>
-                        {/* Frame */}
-                        <mesh material={woodMaterial}>
-                            <boxGeometry args={[2, 2.4, 0.6]} />
-                        </mesh>
-                        {/* Left Door */}
-                        <mesh position={[-0.49, 0, 0]} material={woodMaterial}>
-                            <boxGeometry args={[0.02, 2.35, 0.55]} />
-                        </mesh>
-                        {/* Right Door */}
-                        <mesh position={[0.49, 0, 0]} material={woodMaterial}>
-                            <boxGeometry args={[0.02, 2.35, 0.55]} />
-                        </mesh>
-                        {/* Handles */}
-                        {createHandle([-0.5, 0, 0])}
-                        {createHandle([0.5, 0, 0])}
-                        {isActive && (
-                            <mesh material={outlineMaterial} scale={[1.02, 1.02, 1.02]}>
-                                <boxGeometry args={[2, 2.4, 0.6]} />
-                            </mesh>
-                        )}
-                    </group>
-                );
-            case 3: // Single block
-                return (
-                    <group>
-                        {/* Main body */}
-                        <mesh material={woodMaterial}>
+                        {isActive && <mesh material={outlineMaterial} scale={[1.02, 1.02, 1.02]}>
                             <boxGeometry args={[1, 2.4, 0.6]} />
-                        </mesh>
-                        {/* Shelves */}
-                        {[0.6, 1.2, 1.8].map((y) => (
-                            <mesh key={y} position={[0, y - 1.2, 0]} material={woodMaterial}>
-                                <boxGeometry args={[0.98, 0.02, 0.58]} />
-                            </mesh>
-                        ))}
-                        {isActive && (
-                            <mesh material={outlineMaterial} scale={[1.02, 1.02, 1.02]}>
-                                <boxGeometry args={[1, 2.4, 0.6]} />
-                            </mesh>
-                        )}
+                        </mesh>}
                     </group>
                 );
+
+            case 2: // Storage Block (1/3rd height)
+                return (
+                    <group rotation={[0, Math.PI, 0]} position={[0, -0.8, 0]}>
+                        {/* Main Block */}
+                        <mesh material={woodMaterial}>
+                            <boxGeometry args={[1, 0.8, 0.6]} /> {/* Fixed height to 0.8 */}
+                        </mesh>
+                        {isActive && <mesh material={outlineMaterial} scale={[1.02, 1.02, 1.02]}>
+                            <boxGeometry args={[1, 0.8, 0.6]} /> {/* Fixed height to 0.8 */}
+                        </mesh>}
+                    </group>
+                );
+
             default:
                 return null;
         }
     };
 
-    return renderModel();
+    return (
+        <group>
+            {addLighting()}
+            {renderModel()}
+        </group>
+    );
 };
 
 export default WardrobeModel;
