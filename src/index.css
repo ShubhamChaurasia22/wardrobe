@@ -1,13 +1,224 @@
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #222;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+.container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  border: 2px solid white;
+  border-radius: 10px;
+}
+
+.controls {
+  position: absolute;
+  top: 31px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  width: 90%;
+  border-radius: 10px;
+  background-color: white;
+}
+
+.control-btn,
+.camera-btn {
+  padding: 10px 15px;
+  background: white;
+  border: 2px solid white;
+  border-radius: 5px;
+  color: black;
+  font-size: 16px;
+  text-wrap-mode: nowrap;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+  flex: 1 1 0;
+}
+
+.control-btn:hover {
+  background: rgba(255, 255, 255, 0.5);
+  transform: scale(0.9);
+}
+
+.control-btn.active {
+  border: 1px solid #e38c6e;
+  color: #e38c6e;
+}
+
+.control-btn.active:hover {
+  transform: scale(1);
+}
+
+.size-controls,
+.wardrobe-controls,
+.style-wardrobes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  background-color: white;
+  padding: 10px;
+  border-radius: 5px;
+  width: 94%;
+  height: fit-content;
+  border: 1px solid #fff;
+  margin: 0 auto;
+}
+
+.size-controls label {
+  color: black;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 0 10px;
+}
+
+.size-controls span {
+  width: 50px;
+}
+
+.size-controls input {
+  width: 50px;
+  padding: 5px;
+  font-size: 14px;
+  border-radius: 3px;
+  border: none;
+  text-align: center;
+  border: 1px solid #e38c6e;
+}
+
+.size-controls .size-control-btn {
+  width: 95%;
+  padding: 10px;
+  background: #e38c6e;
+  border: 2px solid whitesmoke;
+  border-radius: 35px;
+  color: #fff;
+  font-size: 16px;
+  text-wrap-mode: nowrap;
+  cursor: pointer;
+  margin: 0 auto;
+}
+
+.camera {
+  position: absolute;
+  top: 6rem;
+  left: 35px;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 20px;
+}
+
+.camera button {
+  border-radius: 50%;
+}
+
+.size-controls .input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.size-controls input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
+  -webkit-appearance: none; /* Chrome, Safari, Edge, Opera */
+  appearance: none;
+  padding-right: 40px; /* Space for the unit text */
+}
+
+.size-controls input[type="number"].no-arrows::-webkit-inner-spin-button,
+.size-controls input[type="number"].no-arrows::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.size-controls .unit {
+  position: absolute;
+  right: -8px;
+  pointer-events: none;
+}
+
+.style-wardrobes {
+  flex-direction: column;
+}
+
+.name-input {
+  width: 94%;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 3px;
+  border: none;
+  outline-offset: transparent;
+  border: 1px solid #e38c6e;
+}
+
+.name-input:focus {
+  outline: none;
+  border: 1px solid #e38c6e;
+}
+
+.react-tabs__tab-list {
+  display: flex;
+}
+
+.react-tabs__tab {
+  width: 50%;
+  text-align: center;
+  font-size: 16px;
+  color: #000;
+}
+
+.react-tabs__tab.react-tabs__tab--selected {
+  background-color: rgb(55, 75, 64);
+  color: #fff;
+}
+
+.add-wardrobes {
+  background-color: #fff;
+  border-radius: 100%;
+}
+
+.add-wardrobes:hover {
+  background-color: #e38c6e;
+  color: #fff;
+}
+
+@media screen and (min-width: 768px) {
+  .controls,
+  .size-controls,
+  .wardrobe-controls,
+  .style-wardrobes {
+    width: 75%;
+  }
+
+  .camera {
+    top: 2rem;
+  }
+}
+
+@media screen and (min-width: 1024px) {
+  .controls {
+    width: 50%;
+  }
+
+  .size-controls,
+  .wardrobe-controls,
+  .style-wardrobes {
+    position: absolute;
+    bottom: 10%;
+    right: 2rem;
+    width: 40%;
+  }
 }
