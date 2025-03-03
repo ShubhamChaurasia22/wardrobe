@@ -17,6 +17,7 @@ type WallSection = {
     type: string;
     modelType?: number;
     handleType?: 'none' | 'straight' | 'fancy' | 'spherical';
+    height?: number;  // Add height property
 };
 
 type LayoutConfig = {
@@ -102,27 +103,24 @@ const App = () => {
             if (!Array.isArray(currentWall)) return prevConfig;
 
             const updatedWall = [...currentWall];
+            
+            // For storage block (modelType 2)
             if (selectedModel === 2) {
-                if (index < updatedWall.length - 1 && 
-                    updatedWall[index].type === "free-space" && 
-                    updatedWall[index + 1].type === "free-space") {
-                    updatedWall[index] = { 
-                        ...updatedWall[index], 
-                        type: "wardrobe", 
-                        modelType: selectedModel,
-                        handleType: selectedHandle 
-                    };
-                    updatedWall[index + 1] = { 
-                        ...updatedWall[index + 1], 
-                        type: "wardrobe-extension" 
-                    };
-                }
-            } else {
                 updatedWall[index] = { 
                     ...updatedWall[index], 
                     type: "wardrobe", 
                     modelType: selectedModel,
-                    handleType: selectedHandle 
+                    handleType: 'none',  // Storage block doesn't need handle
+                    height: 0.8  // Add height property for storage block
+                };
+            } else {
+                // For single door wardrobe (modelType 1)
+                updatedWall[index] = { 
+                    ...updatedWall[index], 
+                    type: "wardrobe", 
+                    modelType: selectedModel,
+                    handleType: selectedHandle,
+                    height: 2.4  // Full height for regular wardrobe
                 };
             }
             

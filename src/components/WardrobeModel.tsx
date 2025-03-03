@@ -7,9 +7,15 @@ interface WardrobeModelProps {
     modelType: number;
     handleType?: 'none' | 'straight' | 'fancy' | 'spherical';
     isActive?: boolean;
+    height?: number;  // Add height prop
 }
 
-const WardrobeModel = ({ modelType, handleType = 'straight', isActive = false }: WardrobeModelProps) => {
+const WardrobeModel = ({ 
+    modelType, 
+    handleType = 'straight', 
+    isActive = false,
+    height = 2.4  // Default to full height
+}: WardrobeModelProps) => {
     const woodTexture = useLoader(TextureLoader, '/textures/wood.jpg');
     const metalTexture = useLoader(TextureLoader, '/textures/metal.jpg');
 
@@ -121,11 +127,13 @@ const WardrobeModel = ({ modelType, handleType = 'straight', isActive = false }:
 
     // Update the renderModel function to include lighting
     const renderModel = () => {
+        // Calculate floor position correctly
+        const floorPosition = -(height / 2); // Base position at floor level
+
         switch (modelType) {
             case 1: // Single Door Wardrobe (full height)
                 return (
-                    <group rotation={[0, Math.PI, 0]}>
-                        {/* Main Frame */}
+                    <group rotation={[0, Math.PI, 0]} position={[0, floorPosition + 1.2, 0]}>
                         <mesh material={woodMaterial}>
                             <boxGeometry args={[1, 2.4, 0.6]} />
                         </mesh>
@@ -133,7 +141,7 @@ const WardrobeModel = ({ modelType, handleType = 'straight', isActive = false }:
                         <mesh position={[0.49, 0, 0]} material={woodMaterial}>
                             <boxGeometry args={[0.02, 2.35, 0.55]} />
                         </mesh>
-                        {createHandle([0.5, 0, 0])}
+                        {handleType !== 'none' && createHandle([0.5, 0, 0])}
                         {isActive && <mesh material={outlineMaterial} scale={[1.02, 1.02, 1.02]}>
                             <boxGeometry args={[1, 2.4, 0.6]} />
                         </mesh>}
@@ -141,15 +149,17 @@ const WardrobeModel = ({ modelType, handleType = 'straight', isActive = false }:
                 );
 
             case 2: // Storage Block (1/3rd height)
+                const blockHeight = 0.8; // 1/3rd of 2.4
                 return (
-                    <group rotation={[0, Math.PI, 0]} position={[0, -0.8, 0]}>
-                        {/* Main Block */}
+                    <group rotation={[0, Math.PI, 0]} position={[0, floorPosition + 0.4, 0]}>
                         <mesh material={woodMaterial}>
-                            <boxGeometry args={[1, 0.8, 0.6]} /> {/* Fixed height to 0.8 */}
+                            <boxGeometry args={[1, blockHeight, 0.6]} />
                         </mesh>
-                        {isActive && <mesh material={outlineMaterial} scale={[1.02, 1.02, 1.02]}>
-                            <boxGeometry args={[1, 0.8, 0.6]} /> {/* Fixed height to 0.8 */}
-                        </mesh>}
+                        {isActive && (
+                            <mesh material={outlineMaterial} scale={[1.02, 1.02, 1.02]}>
+                                <boxGeometry args={[1, blockHeight, 0.6]} />
+                            </mesh>
+                        )}
                     </group>
                 );
 

@@ -8,6 +8,7 @@ type WallSection = {
     type: string;
     modelType?: number;
     handleType?: 'none' | 'straight' | 'fancy' | 'spherical';
+    height?: number; // Add height property
 };
 
 type LayoutConfig = {
@@ -116,6 +117,19 @@ const Room = ({
         }
     };
 
+    const getWallRotation = (wall: keyof LayoutConfig): [number, number, number] => {
+        switch (wall) {
+            case 'leftWall':
+                return [0, -Math.PI / 2, 0];
+            case 'rightWall':
+                return [0, Math.PI / 2, 0];
+            case 'backWall':
+                return [0, Math.PI, 0];
+            default:
+                return [0, 0, 0];
+        }
+    };
+
     const handleWardrobeClick = (wall: keyof LayoutConfig, index: number) => {
         setActiveWardrobe({ wall, index });
     };
@@ -135,13 +149,14 @@ const Room = ({
                             <group
                                 key={`leftWall-${index}`}
                                 position={getWallSectionPosition('leftWall', index, layoutConfig.leftWall.length)}
-                                rotation={[0, -Math.PI / 2, 0]}
+                                rotation={getWallRotation('leftWall')}
                                 onClick={() => handleWardrobeClick('leftWall', index)}
                             >
                                 <WardrobeModel 
                                     modelType={section.modelType ?? 0} 
                                     handleType={section.handleType}
                                     isActive={activeWardrobe?.wall === 'leftWall' && activeWardrobe?.index === index}
+                                    height={section.height ?? 2.4} // Pass height property
                                 />
                             </group>
                         ) : null
@@ -162,13 +177,14 @@ const Room = ({
                             <group
                                 key={`rightWall-${index}`}
                                 position={getWallSectionPosition('rightWall', index, layoutConfig.rightWall.length)}
-                                rotation={[0, Math.PI / 2, 0]}
+                                rotation={getWallRotation('rightWall')}
                                 onClick={() => handleWardrobeClick('rightWall', index)}
                             >
                                 <WardrobeModel 
                                     modelType={section.modelType ?? 0} 
                                     handleType={section.handleType}
                                     isActive={activeWardrobe?.wall === 'rightWall' && activeWardrobe?.index === index}
+                                    height={section.height ?? 2.4} // Pass height property
                                 />
                             </group>
                         ) : null
@@ -187,13 +203,14 @@ const Room = ({
                     <group
                         key={`backWall-${index}`}
                         position={getWallSectionPosition('backWall', index, layoutConfig.backWall.length)}
-                        rotation={[0, Math.PI, 0]}
+                        rotation={getWallRotation('backWall')}
                         onClick={() => handleWardrobeClick('backWall', index)}
                     >
                         <WardrobeModel 
                             modelType={section.modelType ?? 0} 
                             handleType={section.handleType}
                             isActive={activeWardrobe?.wall === 'backWall' && activeWardrobe?.index === index}
+                            height={section.height ?? 2.4} // Pass height property
                         />
                     </group>
                 ) : null
