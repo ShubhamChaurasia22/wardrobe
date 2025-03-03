@@ -139,7 +139,7 @@ const Room = ({
                                 <WardrobeModel 
                                     modelType={section.modelType ?? 0} 
                                     handleType={section.handleType}
-                                    isActive={activeWardrobe?.wall === 'leftWall' && activeWardrobe?.index === index}
+                                    isActive={stage !== "preview" && activeWardrobe?.wall === 'leftWall' && activeWardrobe?.index === index}
                                     height={section.height ?? 2.4} // Pass height property
                                     color={section.color}  // Pass color directly
                                     handleColor={section.handleColor}  // Pass handle color directly
@@ -170,7 +170,7 @@ const Room = ({
                                 <WardrobeModel 
                                     modelType={section.modelType ?? 0} 
                                     handleType={section.handleType}
-                                    isActive={activeWardrobe?.wall === 'rightWall' && activeWardrobe?.index === index}
+                                    isActive={stage !== "preview" && activeWardrobe?.wall === 'rightWall' && activeWardrobe?.index === index}
                                     height={section.height ?? 2.4} // Pass height property
                                     color={section.color}  // Pass color directly
                                     handleColor={section.handleColor}  // Pass handle color directly
@@ -199,7 +199,7 @@ const Room = ({
                         <WardrobeModel 
                             modelType={section.modelType ?? 0} 
                             handleType={section.handleType}
-                            isActive={activeWardrobe?.wall === 'backWall' && activeWardrobe?.index === index}
+                            isActive={stage !== "preview" && activeWardrobe?.wall === 'backWall' && activeWardrobe?.index === index}
                             height={section.height ?? 2.4} // Pass height property
                             color={section.color}  // Pass color directly
                             handleColor={section.handleColor}  // Pass handle color directly

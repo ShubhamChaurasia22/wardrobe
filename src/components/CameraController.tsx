@@ -32,10 +32,6 @@ const CameraController = ({ view }: { view: string }) => {
                 lookAtPosition.set(0, 5, 0);
         }
 
-        console.log(`Switching to view: ${view}`);
-        console.log(`Target Position: ${targetPosition.toArray()}`);
-        console.log(`LookAt Position: ${lookAtPosition.toArray()}`);
-
         const animateCamera = () => {
             if (!cameraRef.current) return;
             cameraRef.current.position.lerp(targetPosition, 0.05);

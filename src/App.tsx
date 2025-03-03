@@ -87,6 +87,8 @@ const App = () => {
     useEffect(() => {
         if (stage === "preview") {
             setView("orbit");  // Set to orbit view in preview stage
+            // Deactivate any selected wardrobe in preview mode
+            setActiveWardrobe(null);
         }
     }, [stage]);
 
@@ -301,10 +303,12 @@ const App = () => {
                     activeWardrobe={activeWardrobe}
                     setActiveWardrobe={setActiveWardrobe}
                 />
-                <CameraController view={view} />
+                {stage !== "preview" && <CameraController view={view} />}
                 <OrbitControls 
-                    enableZoom={stage === "preview"}  // Enable zoom only in preview
-                    enablePan={stage === "preview"}   // Enable pan only in preview
+                    enableZoom={true}
+                    enablePan={true}
+                    enableRotate={true}
+                    makeDefault={stage === "preview"}
                 />
             </Canvas>
 

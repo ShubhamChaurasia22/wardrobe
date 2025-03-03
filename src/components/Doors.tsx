@@ -25,12 +25,12 @@ const Doors = ({
         { 
             id: 1, 
             name: "Single Door", 
-            image: "https://www.tomeasure.co.uk/wp-content/themes/hello-theme-child-master/configurator-library/assets/thumbnails/door_styles/cairo_door_style_thumbnail.jpg"
+            image: "https://cdn-icons-png.flaticon.com/512/607/607050.png"
         },
         { 
             id: 2, 
             name: "Storage Block", 
-            image: "https://www.tomeasure.co.uk/wp-content/themes/hello-theme-child-master/configurator-library/assets/thumbnails/door_styles/cairo_door_style_thumbnail.jpg"
+            image: "https://cdn-icons-png.flaticon.com/512/2610/2610956.png"
         }
     ];
 
