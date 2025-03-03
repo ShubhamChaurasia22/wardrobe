@@ -7,6 +7,8 @@ interface DoorsProps {
     selectedOption: number | null;
     setSelectedOption: (id: number | null) => void;
     hasActiveWardrobe: boolean;
+    handlePosition: 'left' | 'right';
+    setHandlePosition: (position: 'left' | 'right') => void;
 }
 
 const Doors = ({ 
@@ -15,7 +17,9 @@ const Doors = ({
     setSelectedHandle, 
     selectedOption, 
     setSelectedOption,
-    hasActiveWardrobe 
+    hasActiveWardrobe,
+    handlePosition,
+    setHandlePosition
 }: DoorsProps) => {
     const wardrobeOptions = [
         { 
@@ -36,6 +40,11 @@ const Doors = ({
         { id: 'fancy' as const, name: "Fancy Handle" },
         { id: 'spherical' as const, name: "Spherical Handle" },
     ] as const;
+
+    const handlePositionOptions = [
+        { id: 'left', name: "Left" },
+        { id: 'right', name: "Right" },
+    ];
 
     const handleSelectOption = (id: number) => {
         setSelectedOption(id);
@@ -108,6 +117,32 @@ const Doors = ({
                         }}
                     >
                         <p>{handle.name}</p>
+                        {!hasActiveWardrobe && (
+                            <p className="select-wardrobe-message">
+                                Select a wardrobe first
+                            </p>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            <div className="section-title">Position of Handle</div>
+            <div className="handle-position-options">
+                {handlePositionOptions.map((position) => (
+                    <div
+                        key={position.id}
+                        className={`handle-position-option ${hasActiveWardrobe ? "enabled" : ""} ${
+                            handlePosition === position.id ? "selected" : ""
+                        }`}
+                        onClick={() => hasActiveWardrobe && setHandlePosition(position.id as 'left' | 'right')}
+                        style={{ 
+                            padding: "1rem",
+                            borderRadius: "8px",
+                            cursor: hasActiveWardrobe ? "pointer" : "not-allowed",
+                            border: handlePosition === position.id ? "2px solid #e38c6e" : "none"
+                        }}
+                    >
+                        <p>{position.name}</p>
                         {!hasActiveWardrobe && (
                             <p className="select-wardrobe-message">
                                 Select a wardrobe first

@@ -1,69 +1,102 @@
-import React from "react";
+import React, { useMemo } from "react";
 import * as THREE from "three";
 import { useLoader } from "@react-three/fiber";
 import { TextureLoader } from "three/src/loaders/TextureLoader";
+
+interface ColorOption {
+    color?: string;
+    texture?: string;
+    isMetallic?: boolean;
+}
 
 interface WardrobeModelProps {
     modelType: number;
     handleType?: 'none' | 'straight' | 'fancy' | 'spherical';
     isActive?: boolean;
-    height?: number;  // Add height prop
+    height?: number;
+    color?: ColorOption;  // Update to use ColorOption type
+    handleColor?: ColorOption;  // Update to use ColorOption type
+    handlePosition?: 'left' | 'right';
 }
 
-const WardrobeModel = ({ 
-    modelType, 
-    handleType = 'straight', 
-    isActive = false,
-    height = 2.4  // Default to full height
-}: WardrobeModelProps) => {
+const WardrobeModel = ({ modelType, handleType = 'straight', isActive = false, height = 2.4, color, handleColor, handlePosition = 'right' }: WardrobeModelProps) => {
+    // Load all textures unconditionally at the top level
     const woodTexture = useLoader(TextureLoader, '/textures/wood.jpg');
     const metalTexture = useLoader(TextureLoader, '/textures/metal.jpg');
+    const colorTexture = useLoader(TextureLoader, color?.texture || '/textures/wood.jpg');
+    const handleColorTexture = useLoader(TextureLoader, handleColor?.texture || '/textures/metal.jpg');
 
-    const woodMaterial = new THREE.MeshStandardMaterial({
+    // Create materials using useMemo
+    const woodMaterial = useMemo(() => new THREE.MeshStandardMaterial({
         map: woodTexture,
         metalness: 0.2,
         roughness: 0.8,
         color: 0xA0522D  // Add a base color to make wood more visible
-    });
+    }), [woodTexture]);
 
-    const handleMaterial = new THREE.MeshStandardMaterial({
+    const handleMaterial = useMemo(() => new THREE.MeshStandardMaterial({
         map: metalTexture,
         metalness: 0.8,
         roughness: 0.2,
         color: 0x888888
-    });
+    }), [metalTexture]);
 
-    // Add outline material for active wardrobe
-    const outlineMaterial = new THREE.MeshBasicMaterial({
+    const outlineMaterial = useMemo(() => new THREE.MeshBasicMaterial({
         color: '#e38c6e',
         wireframe: true
-    });
+    }), []);
 
-    // Add border material
-    const borderMaterial = new THREE.MeshStandardMaterial({
-        color: 0x333333,
-        metalness: 0.5,    // Increased metalness
-        roughness: 0.3,    // Decreased roughness
-        emissive: 0x111111 // Add slight emissive effect
-    });
+    // Create wardrobe material based on props
+    const wardrobeMaterial = useMemo(() => {
+        if (color) {
+            if (color.texture) {
+                return new THREE.MeshStandardMaterial({
+                    map: colorTexture,
+                    metalness: color.isMetallic ? 0.8 : 0.2,
+                    roughness: color.isMetallic ? 0.2 : 0.8
+                });
+            }
+            return new THREE.MeshStandardMaterial({
+                color: color.color,
+                metalness: color.isMetallic ? 0.8 : 0.2,
+                roughness: color.isMetallic ? 0.2 : 0.8
+            });
+        }
+        return woodMaterial;
+    }, [color, colorTexture, woodMaterial]);
 
-    // Add shadow material
-    const shadowMaterial = new THREE.MeshStandardMaterial({
-        color: 0x000000,
-        transparent: true,
-        opacity: 0.3,      // Increased opacity
-        side: THREE.DoubleSide // Show shadow on both sides
-    });
+    // Create handle material based on props
+    const currentHandleMaterial = useMemo(() => {
+        if (handleColor) {
+            if (handleColor.texture) {
+                return new THREE.MeshStandardMaterial({
+                    map: handleColorTexture,
+                    metalness: handleColor.isMetallic ? 0.8 : 0.2,
+                    roughness: handleColor.isMetallic ? 0.2 : 0.8
+                });
+            }
+            return new THREE.MeshStandardMaterial({
+                color: handleColor.color,
+                metalness: handleColor.isMetallic ? 0.8 : 0.2,
+                roughness: handleColor.isMetallic ? 0.2 : 0.8
+            });
+        }
+        return handleMaterial;
+    }, [handleColor, handleColorTexture, handleMaterial]);
 
-    const createHandle = (position: [number, number, number]) => {
+    const createHandle = (defaultPosition: [number, number, number]) => {
+        const [x, y, z] = defaultPosition;
+        // Reduce the offset for left position by using a smaller multiplier
+        const handleX = handlePosition === 'left' ? -(x * 0.5) : x; // Reduced from -x to -(x * 0.6)
+
         switch (handleType) {
             case 'none':
                 return null;
             
             case 'straight':
                 return (
-                    <group position={position}>
-                        <mesh material={handleMaterial} position={[-0.1, 0, 0.31]}>
+                    <group position={[handleX, y, z]}>
+                        <mesh material={currentHandleMaterial} position={[-0.1, 0, 0.31]}>
                             <boxGeometry args={[0.08, 0.4, 0.08]} />
                         </mesh>
                     </group>
@@ -71,17 +104,17 @@ const WardrobeModel = ({
             
             case 'fancy':
                 return (
-                    <group position={position}>
-                        <mesh material={handleMaterial} position={[-0.1, 0, 0.31]}>
+                    <group position={[handleX, y, z]}>
+                        <mesh material={currentHandleMaterial} position={[-0.1, 0, 0.31]}>
                             <boxGeometry args={[0.08, 0.4, 0.08]} />
                         </mesh>
-                        <mesh position={[-0.1, 0.2, 0.31]} material={handleMaterial}>
+                        <mesh position={[-0.1, 0.2, 0.31]} material={currentHandleMaterial}>
                             <boxGeometry args={[0.15, 0.04, 0.15]} />
                         </mesh>
-                        <mesh position={[-0.1, -0.2, 0.31]} material={handleMaterial}>
+                        <mesh position={[-0.1, -0.2, 0.31]} material={currentHandleMaterial}>
                             <boxGeometry args={[0.15, 0.04, 0.15]} />
                         </mesh>
-                        <mesh position={[-0.1, 0, 0.35]} material={handleMaterial}>
+                        <mesh position={[-0.1, 0, 0.35]} material={currentHandleMaterial}>
                             <sphereGeometry args={[0.06, 16, 16]} />
                         </mesh>
                     </group>
@@ -89,16 +122,16 @@ const WardrobeModel = ({
             
             case 'spherical':
                 return (
-                    <group position={position}>
+                    <group position={[handleX, y, z]}>
                         <group rotation={[Math.PI/2, 0, 0]} position={[-0.1, 0, 0.31]}>
-                            <mesh material={handleMaterial}>
+                            <mesh material={currentHandleMaterial}>
                                 <cylinderGeometry args={[0.03, 0.03, 0.4, 16]} />
                             </mesh>
                         </group>
-                        <mesh position={[-0.1, 0.2, 0.31]} material={handleMaterial}>
+                        <mesh position={[-0.1, 0.2, 0.31]} material={currentHandleMaterial}>
                             <sphereGeometry args={[0.06, 16, 16]} />
                         </mesh>
-                        <mesh position={[-0.1, -0.2, 0.31]} material={handleMaterial}>
+                        <mesh position={[-0.1, -0.2, 0.31]} material={currentHandleMaterial}>
                             <sphereGeometry args={[0.06, 16, 16]} />
                         </mesh>
                     </group>
@@ -134,11 +167,11 @@ const WardrobeModel = ({
             case 1: // Single Door Wardrobe (full height)
                 return (
                     <group rotation={[0, Math.PI, 0]} position={[0, floorPosition + 1.2, 0]}>
-                        <mesh material={woodMaterial}>
+                        <mesh material={wardrobeMaterial}>
                             <boxGeometry args={[1, 2.4, 0.6]} />
                         </mesh>
                         {/* Door */}
-                        <mesh position={[0.49, 0, 0]} material={woodMaterial}>
+                        <mesh position={[0.49, 0, 0]} material={wardrobeMaterial}>
                             <boxGeometry args={[0.02, 2.35, 0.55]} />
                         </mesh>
                         {handleType !== 'none' && createHandle([0.5, 0, 0])}
@@ -148,16 +181,25 @@ const WardrobeModel = ({
                     </group>
                 );
 
-            case 2: // Storage Block (1/3rd height)
-                const blockHeight = 0.8; // 1/3rd of 2.4
+            case 2: // Storage Block
                 return (
-                    <group rotation={[0, Math.PI, 0]} position={[0, floorPosition + 0.4, 0]}>
-                        <mesh material={woodMaterial}>
-                            <boxGeometry args={[1, blockHeight, 0.6]} />
+                    <group rotation={[0, Math.PI, 0]}>
+                        {/* Main Storage Block - positioned at bottom */}
+                        <mesh 
+                            material={wardrobeMaterial} 
+                            position={[0, -(height/2) + 0.4, 0]} // Position at bottom of wall
+                        >
+                            <boxGeometry args={[1, 0.8, 0.6]} /> {/* Width, Height, Depth */}
                         </mesh>
+
+                        {/* Active state outline */}
                         {isActive && (
-                            <mesh material={outlineMaterial} scale={[1.02, 1.02, 1.02]}>
-                                <boxGeometry args={[1, blockHeight, 0.6]} />
+                            <mesh 
+                                material={outlineMaterial} 
+                                position={[0, -(height/2) + 0.4, 0]}
+                                scale={[1.02, 1.02, 1.02]}
+                            >
+                                <boxGeometry args={[1, 0.8, 0.6]} />
                             </mesh>
                         )}
                     </group>

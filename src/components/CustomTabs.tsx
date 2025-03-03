@@ -3,6 +3,7 @@ import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import "react-tabs/style/react-tabs.css";
 import Doors from "./Doors";
 import Colors from "./Colors";
+import { ColorOption } from '../types';
 
 interface CustomTabsProps {
     activeTab: string;
@@ -13,6 +14,12 @@ interface CustomTabsProps {
     selectedOption: number;
     setSelectedOption: (id: number | null) => void;
     hasActiveWardrobe: boolean;
+    onSelectWardrobeColor: (option: ColorOption) => void;
+    onSelectHandleColor: (option: ColorOption) => void;
+    selectedWardrobeColor: string;
+    selectedHandleColor: string;
+    handlePosition: 'left' | 'right';  // Add these lines
+    setHandlePosition: (position: 'left' | 'right') => void;
 }
 
 const CustomTabs = ({ 
@@ -23,7 +30,13 @@ const CustomTabs = ({
     setSelectedHandle,
     selectedOption,
     setSelectedOption,
-    hasActiveWardrobe // Add this prop
+    hasActiveWardrobe,
+    onSelectWardrobeColor,
+    onSelectHandleColor,
+    selectedWardrobeColor,
+    selectedHandleColor,
+    handlePosition,
+    setHandlePosition
 }: CustomTabsProps) => {
     const handleSelect = (index: number) => {
         setActiveTab(index === 0 ? "doors" : "colors");
@@ -44,10 +57,18 @@ const CustomTabs = ({
                     selectedOption={selectedOption}
                     setSelectedOption={setSelectedOption}
                     hasActiveWardrobe={hasActiveWardrobe}
+                    handlePosition={handlePosition}
+                    setHandlePosition={setHandlePosition}
                 />
             </TabPanel>
             <TabPanel>
-                <Colors />
+                <Colors 
+                    onSelectWardrobeColor={onSelectWardrobeColor}
+                    onSelectHandleColor={onSelectHandleColor}
+                    selectedWardrobeColor={selectedWardrobeColor}
+                    selectedHandleColor={selectedHandleColor}
+                    hasActiveWardrobe={hasActiveWardrobe}
+                />
             </TabPanel>
         </Tabs>
     );

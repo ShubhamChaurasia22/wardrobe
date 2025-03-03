@@ -2,25 +2,9 @@ import React, { useState, useEffect } from "react";
 import * as THREE from "three";
 import { Html } from "@react-three/drei";
 import WardrobeModel from "./WardrobeModel";
+import { WallSection, LayoutConfig } from '../types'; // Import both types
 
-type WallSection = {
-    width: number;
-    type: string;
-    modelType?: number;
-    handleType?: 'none' | 'straight' | 'fancy' | 'spherical';
-    height?: number; // Add height property
-};
-
-type LayoutConfig = {
-    roomDetails: {
-        length: number;
-        width: number;
-        height: number;
-    };
-    leftWall: WallSection[];
-    backWall: WallSection[];
-    rightWall: WallSection[];
-};
+// Remove the duplicate WallSection and LayoutConfig type definitions
 
 interface RoomProps {
     width: number;
@@ -157,6 +141,9 @@ const Room = ({
                                     handleType={section.handleType}
                                     isActive={activeWardrobe?.wall === 'leftWall' && activeWardrobe?.index === index}
                                     height={section.height ?? 2.4} // Pass height property
+                                    color={section.color}  // Pass color directly
+                                    handleColor={section.handleColor}  // Pass handle color directly
+                                    handlePosition={section.handlePosition}  // Add this line
                                 />
                             </group>
                         ) : null
@@ -185,6 +172,9 @@ const Room = ({
                                     handleType={section.handleType}
                                     isActive={activeWardrobe?.wall === 'rightWall' && activeWardrobe?.index === index}
                                     height={section.height ?? 2.4} // Pass height property
+                                    color={section.color}  // Pass color directly
+                                    handleColor={section.handleColor}  // Pass handle color directly
+                                    handlePosition={section.handlePosition}  // Add this line
                                 />
                             </group>
                         ) : null
@@ -211,6 +201,9 @@ const Room = ({
                             handleType={section.handleType}
                             isActive={activeWardrobe?.wall === 'backWall' && activeWardrobe?.index === index}
                             height={section.height ?? 2.4} // Pass height property
+                            color={section.color}  // Pass color directly
+                            handleColor={section.handleColor}  // Pass handle color directly
+                            handlePosition={section.handlePosition}  // Add this line
                         />
                     </group>
                 ) : null
