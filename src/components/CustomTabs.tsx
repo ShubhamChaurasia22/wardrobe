@@ -1,28 +1,36 @@
-import React from "react";
-import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
-import "react-tabs/style/react-tabs.css";
-import Doors from "./Doors";
+import React, { useMemo } from "react";
+import * as THREE from "three";
+import { Tabs, TabList, Tab, TabPanel } from "react-tabs";
+import { useLoader } from "@react-three/fiber";
+import { TextureLoader } from "three/src/loaders/TextureLoader";
 import Colors from "./Colors";
-import { ColorOption } from '../types';
+import Doors from "./Doors";
+import { ColorOption, InternalStorageType } from '../types';
 
 interface CustomTabsProps {
     activeTab: string;
     setActiveTab: (tab: string) => void;
     onSelectModel: (modelType: number, handleType?: 'none' | 'straight' | 'fancy' | 'spherical') => void;
     selectedHandle: 'none' | 'straight' | 'fancy' | 'spherical';
-    setSelectedHandle: (handleType: 'none' | 'straight' | 'fancy' | 'spherical') => void;
+    setSelectedHandle: (handle: 'none' | 'straight' | 'fancy' | 'spherical') => void;
     selectedOption: number;
-    setSelectedOption: (id: number | null) => void;
+    setSelectedOption: (option: number | null) => void;
     hasActiveWardrobe: boolean;
-    onSelectWardrobeColor: (option: ColorOption) => void;
-    onSelectHandleColor: (option: ColorOption) => void;
-    selectedWardrobeColor: string;
-    selectedHandleColor: string;
-    handlePosition: 'left' | 'right';  // Add these lines
+    onSelectWardrobeColor: (color: ColorOption) => void;
+    onSelectHandleColor: (color: ColorOption) => void;
+    selectedWardrobeColor: ColorOption;  // Change from string to ColorOption
+    selectedHandleColor: ColorOption;    // Change from string to ColorOption
+    handlePosition: 'left' | 'right';
     setHandlePosition: (position: 'left' | 'right') => void;
+    cabinetOption: 'none' | 'cabinet-layout';
+    setCabinetOption: (option: 'none' | 'cabinet-layout') => void;
+    internalStorage: InternalStorageType;
+    setInternalStorage: (storage: InternalStorageType) => void;
+    selectedInternalStorageColor: ColorOption;
+    onSelectInternalStorageColor: (option: ColorOption) => void;
 }
 
-const CustomTabs = ({ 
+const CustomTabs = ({
     activeTab, 
     setActiveTab, 
     onSelectModel, 
@@ -36,7 +44,13 @@ const CustomTabs = ({
     selectedWardrobeColor,
     selectedHandleColor,
     handlePosition,
-    setHandlePosition
+    setHandlePosition,
+    cabinetOption,
+    setCabinetOption,
+    internalStorage,
+    setInternalStorage,
+    selectedInternalStorageColor,
+    onSelectInternalStorageColor
 }: CustomTabsProps) => {
     const handleSelect = (index: number) => {
         setActiveTab(index === 0 ? "doors" : "colors");
@@ -59,14 +73,20 @@ const CustomTabs = ({
                     hasActiveWardrobe={hasActiveWardrobe}
                     handlePosition={handlePosition}
                     setHandlePosition={setHandlePosition}
+                    cabinetOption={cabinetOption}
+                    setCabinetOption={setCabinetOption}
+                    internalStorage={internalStorage}
+                    setInternalStorage={setInternalStorage}
                 />
             </TabPanel>
             <TabPanel>
                 <Colors 
                     onSelectWardrobeColor={onSelectWardrobeColor}
                     onSelectHandleColor={onSelectHandleColor}
+                    onSelectInternalStorageColor={onSelectInternalStorageColor}
                     selectedWardrobeColor={selectedWardrobeColor}
                     selectedHandleColor={selectedHandleColor}
+                    selectedInternalStorageColor={selectedInternalStorageColor}
                     hasActiveWardrobe={hasActiveWardrobe}
                 />
             </TabPanel>

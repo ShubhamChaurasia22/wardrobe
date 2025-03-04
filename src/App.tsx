@@ -7,34 +7,12 @@ import Controls from "./components/Controls";
 import SizeControls from "./components/SizeControls";
 import WardrobeControls from "./components/WardrobeControls";
 import StyleWardrobes from "./components/StyleWardrobes";
-import { FaCamera } from "react-icons/fa";
+import { FaCamera, FaArrowLeft } from "react-icons/fa";
 import "./index.css";
-import { ColorOption } from './types';
+import { ColorOption, InternalStorageType, WallSection, LayoutConfig } from './types';
 
 const CameraIcon = FaCamera as unknown as React.FC;
-
-// Update WallSection type to include color properties
-type WallSection = {
-    width: number;
-    type: string;
-    modelType?: number;
-    handleType?: 'none' | 'straight' | 'fancy' | 'spherical';
-    height?: number;
-    color?: ColorOption;
-    handleColor?: ColorOption;
-    handlePosition?: 'left' | 'right';  // Add this line
-};
-
-type LayoutConfig = {
-    roomDetails: {
-        length: number;
-        width: number;
-        height: number;
-    };
-    leftWall: WallSection[];
-    backWall: WallSection[];
-    rightWall: WallSection[];
-};
+const BackIcon = FaArrowLeft as unknown as React.FC;
 
 const App = () => {
     const [view, setView] = useState("orbit");
@@ -48,9 +26,28 @@ const App = () => {
         wall: keyof LayoutConfig;
         index: number;
     } | null>(null);
-    const [selectedWardrobeColor, setSelectedWardrobeColor] = useState('');
-    const [selectedHandleColor, setSelectedHandleColor] = useState('');
+    const [selectedWardrobeColor, setSelectedWardrobeColor] = useState<ColorOption>({
+        id: 'rose-gold',
+        name: 'Rose Gold',
+        color: '#B76E79',
+        isMetallic: true
+    });
+    const [selectedHandleColor, setSelectedHandleColor] = useState<ColorOption>({
+        id: '',
+        name: '',
+        color: '',
+        texture: '',
+        isMetallic: false
+    });
     const [selectedHandlePosition, setSelectedHandlePosition] = useState<'left' | 'right'>('right');
+    const [selectedCabinetOption, setSelectedCabinetOption] = useState<'none' | 'cabinet-layout'>('none');
+    const [selectedInternalStorage, setSelectedInternalStorage] = useState<InternalStorageType>('long-hanging');
+    const [selectedInternalStorageColor, setSelectedInternalStorageColor] = useState<ColorOption>({
+        id: 'rose-gold',
+        name: 'Rose Gold',
+        color: '#B76E79',
+        isMetallic: true
+    });
 
     const [layoutConfig, setLayoutConfig] = useState<LayoutConfig>({
         roomDetails: { length: 5, width: 5, height: 2.4 },
@@ -124,32 +121,37 @@ const App = () => {
 
             const updatedWall = [...currentWall];
             
-            // For storage block (modelType 2)
-            if (selectedModel === 2) {
-                updatedWall[index] = { 
-                    ...updatedWall[index], 
-                    type: "wardrobe", 
-                    modelType: selectedModel,
-                    handleType: 'none',  // Storage block doesn't need handle
-                    height: 0.8,  // Add height property for storage block
-                    handlePosition: 'right'  // Add default handle position
+            // Add shared properties with default colors
+            const commonProps = {
+                type: "wardrobe",
+                modelType: selectedModel,
+                handlePosition: selectedHandlePosition,
+                cabinetOption: selectedCabinetOption,
+                internalStorage: selectedInternalStorage,
+                color: selectedWardrobeColor,
+                handleColor: selectedHandleColor,
+                internalStorageColor: selectedInternalStorageColor // Add this
+            };
+
+            if (selectedModel === 2) { // Storage Block
+                updatedWall[index] = {
+                    ...updatedWall[index],
+                    ...commonProps,
+                    handleType: 'none',
+                    height: 0.8
                 };
-            } else {
-                // For single door wardrobe (modelType 1)
-                updatedWall[index] = { 
-                    ...updatedWall[index], 
-                    type: "wardrobe", 
-                    modelType: selectedModel,
+            } else { // Single Door Wardrobe
+                updatedWall[index] = {
+                    ...updatedWall[index],
+                    ...commonProps,
                     handleType: selectedHandle,
-                    height: 2.4,  // Full height for regular wardrobe
-                    handlePosition: 'right'  // Add default handle position
+                    height: 2.4
                 };
             }
             
             return { ...prevConfig, [wall]: updatedWall };
         });
 
-        // Set the newly added wardrobe as active
         setActiveWardrobe({ wall, index });
     };
 
@@ -182,7 +184,7 @@ const App = () => {
     const handleWardrobeColorChange = (option: ColorOption) => {
         if (activeWardrobe) {
             const { wall, index } = activeWardrobe;
-            setSelectedWardrobeColor(option.id);
+            setSelectedWardrobeColor(option);
             
             setLayoutConfig(prevConfig => {
                 if (wall === 'roomDetails') return prevConfig;
@@ -209,7 +211,7 @@ const App = () => {
     const handleHandleColorChange = (option: ColorOption) => {
         if (activeWardrobe) {
             const { wall, index } = activeWardrobe;
-            setSelectedHandleColor(option.id);
+            setSelectedHandleColor(option);
             
             setLayoutConfig(prevConfig => {
                 if (wall === 'roomDetails') return prevConfig;
@@ -257,6 +259,79 @@ const App = () => {
         }
     };
 
+    const handleCabinetOptionChange = (option: 'none' | 'cabinet-layout') => {
+        if (activeWardrobe) {
+            setSelectedCabinetOption(option);
+            setLayoutConfig(prevConfig => {
+                const { wall, index } = activeWardrobe;
+                const currentWall = prevConfig[wall];
+                if (!Array.isArray(currentWall)) return prevConfig;
+
+                const updatedWall = [...currentWall];
+                if (updatedWall[index].type === "wardrobe") {
+                    updatedWall[index] = {
+                        ...updatedWall[index],
+                        cabinetOption: option
+                    };
+                }
+                return {
+                    ...prevConfig,
+                    [wall]: updatedWall
+                };
+            });
+        }
+    };
+
+    const handleInternalStorageChange = (storage: InternalStorageType) => {
+        if (activeWardrobe) {
+            setSelectedInternalStorage(storage);
+            setLayoutConfig(prevConfig => {
+                const { wall, index } = activeWardrobe;
+                const currentWall = prevConfig[wall];
+                if (!Array.isArray(currentWall)) return prevConfig;
+
+                const updatedWall = [...currentWall];
+                if (updatedWall[index].type === "wardrobe") {
+                    updatedWall[index] = {
+                        ...updatedWall[index],
+                        internalStorage: storage
+                    };
+                }
+                return {
+                    ...prevConfig,
+                    [wall]: updatedWall
+                };
+            });
+        }
+    };
+
+    const handleInternalStorageColorChange = (option: ColorOption) => {
+        if (activeWardrobe) {
+            setSelectedInternalStorageColor(option);
+            
+            setLayoutConfig(prevConfig => {
+                const { wall, index } = activeWardrobe;
+                if (wall === 'roomDetails') return prevConfig;
+                
+                const currentWall = prevConfig[wall];
+                if (!Array.isArray(currentWall)) return prevConfig;
+                
+                const updatedWall = [...currentWall];
+                if (updatedWall[index]?.type === "wardrobe") {
+                    updatedWall[index] = {
+                        ...updatedWall[index],
+                        internalStorageColor: option
+                    };
+                }
+                
+                return {
+                    ...prevConfig,
+                    [wall]: updatedWall
+                };
+            });
+        }
+    };
+
     // When a wardrobe is selected, update the selected handle to match
     useEffect(() => {
         if (activeWardrobe) {
@@ -265,6 +340,34 @@ const App = () => {
                 const activeSection = wall[activeWardrobe.index];
                 if (activeSection && activeSection.type === "wardrobe" && activeSection.handleType) {
                     setSelectedHandle(activeSection.handleType);
+                }
+            }
+        }
+    }, [activeWardrobe, layoutConfig]);
+
+    // Add this useEffect after your existing useEffect hooks
+    useEffect(() => {
+        if (activeWardrobe) {
+            const wall = layoutConfig[activeWardrobe.wall];
+            if (Array.isArray(wall)) {
+                const activeSection = wall[activeWardrobe.index];
+                if (activeSection && activeSection.type === "wardrobe") {
+                    // Update cabinet option and internal storage when selecting a wardrobe
+                    setSelectedCabinetOption(activeSection.cabinetOption || 'none');
+                    setSelectedInternalStorage(activeSection.internalStorage || 'long-hanging');
+                }
+            }
+        }
+    }, [activeWardrobe, layoutConfig]);
+
+    // Add this useEffect
+    useEffect(() => {
+        if (activeWardrobe) {
+            const wall = layoutConfig[activeWardrobe.wall];
+            if (Array.isArray(wall)) {
+                const activeSection = wall[activeWardrobe.index];
+                if (activeSection && activeSection.type === "wardrobe") {
+                    setSelectedModel(activeSection.modelType || 1);
                 }
             }
         }
@@ -328,12 +431,12 @@ const App = () => {
                             marginTop: "1rem",
                             padding: "0.5rem 1rem",
                             backgroundColor: "white",
-                            border: "1px solid black",
+                            border: "0",
                             borderRadius: "4px",
                             cursor: "pointer"
                         }}
                     >
-                        ← Back
+                        <BackIcon />
                     </button>
                 )}
             </div>
@@ -355,6 +458,12 @@ const App = () => {
                     selectedHandleColor={selectedHandleColor}
                     handlePosition={selectedHandlePosition}
                     setHandlePosition={handleHandlePositionChange}
+                    cabinetOption={selectedCabinetOption}
+                    setCabinetOption={handleCabinetOptionChange}
+                    internalStorage={selectedInternalStorage}
+                    setInternalStorage={handleInternalStorageChange}
+                    selectedInternalStorageColor={selectedInternalStorageColor}
+                    onSelectInternalStorageColor={handleInternalStorageColorChange}
                 />
             )}
         </div>

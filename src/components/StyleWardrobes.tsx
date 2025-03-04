@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import CustomTabs from "./CustomTabs";
-import { ColorOption } from '../types';
+import { ColorOption, InternalStorageType } from '../types';
 
 interface StyleWardrobesProps {
     setStage: (stage: "size" | "wardrobe" | "style" | "preview") => void;
@@ -10,10 +10,17 @@ interface StyleWardrobesProps {
     hasActiveWardrobe: boolean;
     onSelectWardrobeColor: (option: ColorOption) => void;
     onSelectHandleColor: (option: ColorOption) => void;
-    selectedWardrobeColor: string;
-    selectedHandleColor: string;
-    handlePosition: 'left' | 'right';  // Add these lines
+    selectedWardrobeColor: ColorOption;
+    selectedHandleColor: ColorOption;
+    handlePosition: 'left' | 'right';
     setHandlePosition: (position: 'left' | 'right') => void;
+    cabinetOption: 'none' | 'cabinet-layout';
+    setCabinetOption: (option: 'none' | 'cabinet-layout') => void;
+    internalStorage: InternalStorageType;
+    setInternalStorage: (storage: InternalStorageType) => void;
+    // Add these new props
+    selectedInternalStorageColor: ColorOption;
+    onSelectInternalStorageColor: (option: ColorOption) => void;
 }
 
 const StyleWardrobes = ({ 
@@ -27,7 +34,13 @@ const StyleWardrobes = ({
     selectedWardrobeColor,
     selectedHandleColor,
     handlePosition,
-    setHandlePosition
+    setHandlePosition,
+    cabinetOption,
+    setCabinetOption,
+    internalStorage,
+    setInternalStorage,
+    selectedInternalStorageColor,
+    onSelectInternalStorageColor
 }: StyleWardrobesProps) => {
     const [activeTab, setActiveTab] = useState("doors");
     const [selectedOption, setSelectedOption] = useState<number>(1);
@@ -63,6 +76,12 @@ const StyleWardrobes = ({
                 selectedHandleColor={selectedHandleColor}
                 handlePosition={handlePosition}
                 setHandlePosition={setHandlePosition}
+                cabinetOption={cabinetOption}
+                setCabinetOption={setCabinetOption}
+                internalStorage={internalStorage}
+                setInternalStorage={setInternalStorage}
+                selectedInternalStorageColor={selectedInternalStorageColor}
+                onSelectInternalStorageColor={onSelectInternalStorageColor}
             />
 
             <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between" }} className="buttons">

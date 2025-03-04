@@ -87,15 +87,21 @@ const Room = ({
 
     const getWallSectionPosition = (wall: keyof LayoutConfig, index: number, totalSections: number): [number, number, number] => {
         const sectionWidth = wall === 'backWall' ? width / totalSections : length / totalSections;
-        const offset = (index + 0.5) * sectionWidth - (wall === 'backWall' ? width / 2 : length / 2);
 
         switch (wall) {
             case 'leftWall':
-                return [-width / 2, height / 2, offset];
+                // Reverse the offset calculation for left wall
+                const leftWallOffset = (totalSections - index - 0.5) * sectionWidth - length / 2;
+                return [-width / 2, height / 2, leftWallOffset];
+                
             case 'rightWall':
-                return [width / 2, height / 2, offset];
+                const rightWallOffset = (index + 0.5) * sectionWidth - length / 2;
+                return [width / 2, height / 2, rightWallOffset];
+                
             case 'backWall':
-                return [offset, height / 2, -length / 2];
+                const backWallOffset = (index + 0.5) * sectionWidth - width / 2;
+                return [backWallOffset, height / 2, -length / 2];
+                
             default:
                 return [0, 0, 0];
         }
@@ -144,6 +150,10 @@ const Room = ({
                                     color={section.color}  // Pass color directly
                                     handleColor={section.handleColor}  // Pass handle color directly
                                     handlePosition={section.handlePosition}  // Add this line
+                                    cabinetOption={section.cabinetOption}    // Add this
+                                    internalStorage={section.internalStorage} // Add this
+                                    wallPosition="leftWall"  // Make sure this is passed
+                                    internalStorageColor={section.internalStorageColor} // Add this line
                                 />
                             </group>
                         ) : null
@@ -175,6 +185,10 @@ const Room = ({
                                     color={section.color}  // Pass color directly
                                     handleColor={section.handleColor}  // Pass handle color directly
                                     handlePosition={section.handlePosition}  // Add this line
+                                    cabinetOption={section.cabinetOption}    // Add this
+                                    internalStorage={section.internalStorage} // Add this
+                                    wallPosition="rightWall"  // Make sure this is passed
+                                    internalStorageColor={section.internalStorageColor} // Add this line
                                 />
                             </group>
                         ) : null
@@ -204,6 +218,10 @@ const Room = ({
                             color={section.color}  // Pass color directly
                             handleColor={section.handleColor}  // Pass handle color directly
                             handlePosition={section.handlePosition}  // Add this line
+                            cabinetOption={section.cabinetOption}    // Add this
+                            internalStorage={section.internalStorage} // Add this
+                            wallPosition="backWall"  // Make sure this is passed
+                            internalStorageColor={section.internalStorageColor} // Add this line
                         />
                     </group>
                 ) : null

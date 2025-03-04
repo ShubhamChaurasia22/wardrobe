@@ -191,6 +191,8 @@ canvas {
 
 .react-tabs__tab-list {
   display: flex;
+  margin: 0;
+  padding: 0;
 }
 
 .react-tabs__tab {
@@ -198,6 +200,8 @@ canvas {
   text-align: center;
   font-size: 16px;
   color: #000;
+  padding: 1rem;
+  border-radius: 10px;
 }
 
 .react-tabs__tab.react-tabs__tab--selected {
@@ -386,6 +390,50 @@ canvas {
 
 .next-button:hover {
   background-color: #d17c5f;
+}
+
+.cabinet-options,
+.internal-storage-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+  padding: 0.5rem;
+}
+
+.cabinet-option,
+.internal-storage-option {
+  position: relative;
+  text-align: center;
+  background-color: #f5f5f5;
+  transition: all 0.3s ease;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 2px solid transparent;
+}
+
+.cabinet-option:not(.enabled),
+.internal-storage-option:not(.enabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cabinet-option.enabled,
+.internal-storage-option.enabled {
+  opacity: 1;
+  cursor: pointer;
+}
+
+.cabinet-option.enabled:hover,
+.internal-storage-option.enabled:hover {
+  transform: scale(1.05);
+  background-color: #e8e8e8;
+}
+
+.cabinet-option.selected,
+.internal-storage-option.selected {
+  border: 2px solid #e38c6e;
+  background-color: rgba(227, 140, 110, 0.1);
 }
 
 @media screen and (min-width: 768px) {

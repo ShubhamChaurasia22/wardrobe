@@ -6,6 +6,15 @@ export interface ColorOption {
     isMetallic?: boolean;
 }
 
+export type InternalStorageType = 
+    | 'long-hanging'
+    | 'hanging-rail-double-shelf'
+    | 'double-hanging-rail'
+    | 'six-shelves'
+    | 'rail-shelf-1-drawer'
+    | 'rail-shelf-2-drawer'
+    | 'rail-shelf-3-drawer';
+
 export interface WallSection {
     width: number;
     type: string;
@@ -14,7 +23,10 @@ export interface WallSection {
     height?: number;
     color?: ColorOption;
     handleColor?: ColorOption;
-    handlePosition?: 'left' | 'right';  // Add this line
+    handlePosition?: 'left' | 'right';
+    cabinetOption?: 'none' | 'cabinet-layout';
+    internalStorage?: InternalStorageType;
+    internalStorageColor?: ColorOption;
 }
 
 export interface LayoutConfig {

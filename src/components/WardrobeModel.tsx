@@ -2,29 +2,41 @@ import React, { useMemo } from "react";
 import * as THREE from "three";
 import { useLoader } from "@react-three/fiber";
 import { TextureLoader } from "three/src/loaders/TextureLoader";
-
-interface ColorOption {
-    color?: string;
-    texture?: string;
-    isMetallic?: boolean;
-}
+import { ColorOption, InternalStorageType } from '../types';
 
 interface WardrobeModelProps {
     modelType: number;
     handleType?: 'none' | 'straight' | 'fancy' | 'spherical';
     isActive?: boolean;
     height?: number;
-    color?: ColorOption;  // Update to use ColorOption type
-    handleColor?: ColorOption;  // Update to use ColorOption type
+    color?: ColorOption;
+    handleColor?: ColorOption;
     handlePosition?: 'left' | 'right';
+    cabinetOption?: 'none' | 'cabinet-layout';
+    internalStorage?: InternalStorageType;
+    wallPosition: 'leftWall' | 'rightWall' | 'backWall'; // Add this new prop
+    internalStorageColor?: ColorOption;
 }
 
-const WardrobeModel = ({ modelType, handleType = 'straight', isActive = false, height = 2.4, color, handleColor, handlePosition = 'right' }: WardrobeModelProps) => {
+const WardrobeModel = ({ 
+    modelType, 
+    handleType = 'straight', 
+    isActive = false, 
+    height = 2.4, 
+    color, 
+    handleColor, 
+    handlePosition = 'right', 
+    cabinetOption = 'none', 
+    internalStorage = 'long-hanging',
+    wallPosition, // Add this parameter
+    internalStorageColor
+}: WardrobeModelProps) => {
     // Load all textures unconditionally at the top level
     const woodTexture = useLoader(TextureLoader, '/textures/wood.jpg');
     const metalTexture = useLoader(TextureLoader, '/textures/metal.jpg');
     const colorTexture = useLoader(TextureLoader, color?.texture || '/textures/wood.jpg');
     const handleColorTexture = useLoader(TextureLoader, handleColor?.texture || '/textures/metal.jpg');
+    const internalStorageTexture = useLoader(TextureLoader, internalStorageColor?.texture || '/textures/wood.jpg');
 
     // Create materials using useMemo
     const woodMaterial = useMemo(() => new THREE.MeshStandardMaterial({
@@ -83,6 +95,25 @@ const WardrobeModel = ({ modelType, handleType = 'straight', isActive = false, h
         }
         return handleMaterial;
     }, [handleColor, handleColorTexture, handleMaterial]);
+
+    // Create internal storage material
+    const internalStorageMaterial = useMemo(() => {
+        if (internalStorageColor) {
+            if (internalStorageColor.texture) {
+                return new THREE.MeshStandardMaterial({
+                    map: internalStorageTexture,
+                    metalness: internalStorageColor.isMetallic ? 0.8 : 0.2,
+                    roughness: internalStorageColor.isMetallic ? 0.2 : 0.8
+                });
+            }
+            return new THREE.MeshStandardMaterial({
+                color: internalStorageColor.color,
+                metalness: internalStorageColor.isMetallic ? 0.8 : 0.2,
+                roughness: internalStorageColor.isMetallic ? 0.2 : 0.8
+            });
+        }
+        return woodMaterial;
+    }, [internalStorageColor, internalStorageTexture, woodMaterial]);
 
     const createHandle = (defaultPosition: [number, number, number]) => {
         const [x, y, z] = defaultPosition;
@@ -158,47 +189,367 @@ const WardrobeModel = ({ modelType, handleType = 'straight', isActive = false, h
         </>
     );
 
-    // Update the renderModel function to include lighting
+    // Add getRotation helper function
+    const getRotation = (wallPosition: 'leftWall' | 'rightWall' | 'backWall'): [number, number, number] => {
+        switch (wallPosition) {
+            case 'leftWall':
+                return [0, Math.PI, 0];    // 180 degrees around Y axis
+            case 'rightWall':
+                return [0, Math.PI, 0];          // 180 degrees around Y axis
+            case 'backWall':
+                return [0, -Math.PI, 0]; // -180 degrees around Y axis
+            default:
+                return [0, 0, 0];
+        }
+    };
+
+    // Update shouldHideSide function to match the new rotations
+    const shouldHideSide = (side: 'front' | 'back' | 'left' | 'right') => {
+        if (cabinetOption !== 'cabinet-layout') return false;
+
+        switch (wallPosition) {
+            case 'backWall':
+                return side === 'front';  // Hide front when on back wall
+            case 'leftWall':
+                return side === 'right';  // Hide right side when on left wall
+            case 'rightWall':
+                return side === 'front';  // Hide front when on right wall
+            default:
+                return false;
+        }
+    };
+
+    const getInternalStoragePosition = (): [number, number, number] => {
+        switch (wallPosition) {
+            case 'rightWall':
+                return [0, -0.2, 0]; // Lower Y position for right wall
+            case 'backWall':
+                return [0, 0, 0];  // Higher Y position for back wall
+            case 'leftWall':
+                return [0, 0, 0];    // Normal Y position for left wall
+            default:
+                return [-0.45, 0, 0];
+        }
+    };
+
+    // Use internalStorageMaterial instead of internalMaterial in renderInternalStorage
+    const renderInternalStorage = () => {
+        if (cabinetOption !== 'cabinet-layout') return null;
+
+        const startPosition = getInternalStoragePosition();
+
+        switch (internalStorage) {
+            case 'long-hanging':
+                return (
+                    <group position={startPosition}>
+                        <mesh 
+                            material={internalStorageMaterial} 
+                            position={[0, 0.8, 0]}
+                            rotation={[0, 0, Math.PI/2]}
+                        >
+                            <cylinderGeometry args={[0.02, 0.02, 0.9, 8]} />
+                        </mesh>
+                    </group>
+                );
+
+            case 'double-hanging-rail':
+                return (
+                    <group position={startPosition}>
+                        <mesh 
+                            material={internalStorageMaterial} 
+                            position={[0, 1.0, 0]}
+                            rotation={[0, 0, Math.PI/2]}
+                        >
+                            <cylinderGeometry args={[0.02, 0.02, 0.9, 8]} />
+                        </mesh>
+                        <mesh 
+                            material={internalStorageMaterial} 
+                            position={[0, 0.2, 0]}
+                            rotation={[0, 0, Math.PI/2]}
+                        >
+                            <cylinderGeometry args={[0.02, 0.02, 0.9, 8]} />
+                        </mesh>
+                    </group>
+                );
+
+            case 'hanging-rail-double-shelf':
+                return (
+                    <group position={startPosition}>
+                        <mesh 
+                            material={internalStorageMaterial} 
+                            position={[0, 1.0, 0]}
+                            rotation={[0, 0, Math.PI/2]}
+                        >
+                            <cylinderGeometry args={[0.02, 0.02, 0.9, 8]} />
+                        </mesh>
+                        <mesh material={internalStorageMaterial} position={[0, 0.2, 0]}>
+                            <boxGeometry args={[0.9, 0.02, 0.5]} />
+                        </mesh>
+                        <mesh material={internalStorageMaterial} position={[0, -0.6, 0]}>
+                            <boxGeometry args={[0.9, 0.02, 0.5]} />
+                        </mesh>
+                    </group>
+                );
+
+            case 'six-shelves':
+                return (
+                    <group position={startPosition}>
+                        {[...Array(6)].map((_, i) => (
+                            <mesh 
+                                key={i}
+                                material={internalStorageMaterial} 
+                                position={[0, 1.0 - (i * 0.35), 0]}
+                            >
+                                <boxGeometry args={[0.9, 0.02, 0.5]} />
+                            </mesh>
+                        ))}
+                    </group>
+                );
+
+            case 'rail-shelf-1-drawer':
+                return (
+                    <group position={startPosition}>
+                        {/* Hanging rail */}
+                        <mesh 
+                            material={internalStorageMaterial} // Changed from internalMaterial
+                            position={[0, 1.0, 0]}
+                            rotation={[0, 0, Math.PI/2]}
+                        >
+                            <cylinderGeometry args={[0.02, 0.02, 0.9, 8]} />
+                        </mesh>
+                        {/* Shelf */}
+                        <mesh material={internalStorageMaterial} position={[0, 0.2, 0]}>
+                            <boxGeometry args={[0.9, 0.02, 0.5]} />
+                        </mesh>
+                        {/* Single drawer */}
+                        <mesh 
+                            material={internalStorageMaterial}
+                            position={[0, -0.84, 0]} // Keep original position
+                        >
+                            <boxGeometry args={[0.9, 0.35, 0.5]} />
+                        </mesh>
+                    </group>
+                );
+
+            case 'rail-shelf-2-drawer':
+                return (
+                    <group position={startPosition}>
+                        {/* Hanging rail */}
+                        <mesh 
+                            material={internalStorageMaterial}
+                            position={[0, 1.0, 0]}
+                            rotation={[0, 0, Math.PI/2]}
+                        >
+                            <cylinderGeometry args={[0.02, 0.02, 0.9, 8]} />
+                        </mesh>
+                        {/* Shelf */}
+                        <mesh material={internalStorageMaterial} position={[0, 0.2, 0]}>
+                            <boxGeometry args={[0.9, 0.02, 0.5]} />
+                        </mesh>
+                        {/* Two drawers with small gaps */}
+                        {[0, 1].map(i => (
+                            <mesh 
+                                key={i}
+                                material={internalStorageMaterial}
+                                position={[0, -0.43 - (i * 0.36), 0]}
+                            >
+                                <boxGeometry args={[0.9, 0.35, 0.5]} />
+                            </mesh>
+                        ))}
+                    </group>
+                );
+
+            case 'rail-shelf-3-drawer':
+                return (
+                    <group position={startPosition}>
+                        {/* Hanging rail */}
+                        <mesh 
+                            material={internalStorageMaterial}
+                            position={[0, 1.0, 0]}
+                            rotation={[0, 0, Math.PI/2]}
+                        >
+                            <cylinderGeometry args={[0.02, 0.02, 0.9, 8]} />
+                        </mesh>
+                        {/* Shelf */}
+                        <mesh material={internalStorageMaterial} position={[0, 0.2, 0]}>
+                            <boxGeometry args={[0.9, 0.02, 0.5]} />
+                        </mesh>
+                        {/* Three drawers with small gaps */}
+                        {[0, 1, 2].map(i => (
+                            <mesh 
+                                key={i}
+                                material={internalStorageMaterial}
+                                position={[0, -0.28 - (i * 0.3), 0]}
+                            >
+                                <boxGeometry args={[0.9, 0.28, 0.5]} />
+                            </mesh>
+                        ))}
+                    </group>
+                );
+
+            default:
+                return null;
+        }
+    };
+
+    // Update the group rotation in renderModel for both cases
+    const getInternalStorageRotation = (): [number, number, number] => {
+        switch (wallPosition) {
+            case 'rightWall':
+                return [0, Math.PI, 0];
+            case 'backWall':
+                return [0, Math.PI, 0];
+            case 'leftWall':
+                return [0, 0, 0];
+            default:
+                return [0, 0, 0];
+        }
+    };
+
     const renderModel = () => {
-        // Calculate floor position correctly
-        const floorPosition = -(height / 2); // Base position at floor level
+        const floorPosition = -(height / 2);
+
+        // Debug logging for visibility
+        console.log(`Rendering wardrobe on ${wallPosition} wall`);
+
+        // Determine which side is facing the user based on wall position
+        const shouldHideSide = (side: 'front' | 'back' | 'left' | 'right') => {
+            if (cabinetOption !== 'cabinet-layout') return false;
+
+            switch (wallPosition) {
+                case 'backWall':
+                    return side === 'right'; // Hide left side when on back wall (facing user)
+                case 'leftWall':
+                    return side === 'right'; // Hide right side when on left wall
+                case 'rightWall':
+                    return side === 'right'; // Hide front when on right wall
+                default:
+                    return false;
+            }
+        };
 
         switch (modelType) {
-            case 1: // Single Door Wardrobe (full height)
+            case 1: // Single Door Wardrobe
                 return (
-                    <group rotation={[0, Math.PI, 0]} position={[0, floorPosition + 1.2, 0]}>
-                        <mesh material={wardrobeMaterial}>
-                            <boxGeometry args={[1, 2.4, 0.6]} />
-                        </mesh>
-                        {/* Door */}
-                        <mesh position={[0.49, 0, 0]} material={wardrobeMaterial}>
-                            <boxGeometry args={[0.02, 2.35, 0.55]} />
-                        </mesh>
-                        {handleType !== 'none' && createHandle([0.5, 0, 0])}
-                        {isActive && <mesh material={outlineMaterial} scale={[1.02, 1.02, 1.02]}>
-                            <boxGeometry args={[1, 2.4, 0.6]} />
-                        </mesh>}
+                    <group 
+                        rotation={getRotation(wallPosition)} 
+                        position={[0, floorPosition + 1.2, -0.3]}
+                    >
+                        <group>
+                            {/* Back panel - always show */}
+                            <mesh material={wardrobeMaterial} position={[-0.49, 0, 0]}>
+                                <boxGeometry args={[0.02, 2.35, 0.55]} />
+                            </mesh>
+
+                            {/* Left side */}
+                            {!shouldHideSide('left') && (
+                                <mesh 
+                                    material={wardrobeMaterial} 
+                                    position={[0, 0, -0.275]}
+                                >
+                                    <boxGeometry args={[1, 2.35, 0.02]} />
+                                </mesh>
+                            )}
+
+                            {/* Right side */}
+                            {!shouldHideSide('right') && (
+                                <mesh 
+                                    material={wardrobeMaterial} 
+                                    position={[0, 0, 0.275]}
+                                >
+                                    <boxGeometry args={[1, 2.35, 0.02]} />
+                                </mesh>
+                            )}
+
+                            {/* Front panel */}
+                            {!shouldHideSide('front') && (
+                                <mesh position={[0.49, 0, 0]} material={wardrobeMaterial}>
+                                    <boxGeometry args={[0.02, 2.35, 0.55]} />
+                                </mesh>
+                            )}
+
+                            {/* Top and Bottom - always show */}
+                            <mesh material={wardrobeMaterial} position={[0, 1.175, 0]}>
+                                <boxGeometry args={[1, 0.02, 0.55]} />
+                            </mesh>
+                            <mesh material={wardrobeMaterial} position={[0, -1.175, 0]}>
+                                <boxGeometry args={[1, 0.02, 0.55]} />
+                            </mesh>
+                        </group>
+
+                        {/* Handle - only show if cabinet layout is not selected */}
+                        {cabinetOption !== 'cabinet-layout' && handleType !== 'none' && createHandle([0.5, 0, 0])}
+                        
+                        {/* Internal storage - show if cabinet layout is selected */}
+                        {cabinetOption === 'cabinet-layout' && (
+                            <group rotation={getInternalStorageRotation()}>
+                                {renderInternalStorage()}
+                            </group>
+                        )}
+                        
+                        {/* Active outline */}
+                        {isActive && (
+                            <mesh material={outlineMaterial} scale={[1.02, 1.02, 1.02]}>
+                                <boxGeometry args={[1, 2.4, 0.6]} />
+                            </mesh>
+                        )}
                     </group>
                 );
 
             case 2: // Storage Block
                 return (
-                    <group rotation={[0, Math.PI, 0]}>
-                        {/* Main Storage Block - positioned at bottom */}
-                        <mesh 
-                            material={wardrobeMaterial} 
-                            position={[0, -(height/2) + 0.4, 0]} // Position at bottom of wall
-                        >
-                            <boxGeometry args={[1, 0.8, 0.6]} /> {/* Width, Height, Depth */}
-                        </mesh>
+                    <group 
+                        rotation={getRotation(wallPosition)} 
+                        position={[0, floorPosition + 0.4, -0.3]}
+                    >
+                        <group>
+                            {/* Back panel - always show */}
+                            <mesh material={wardrobeMaterial} position={[-0.49, 0, 0]}>
+                                <boxGeometry args={[0.02, 0.8, 0.55]} />
+                            </mesh>
 
-                        {/* Active state outline */}
+                            {/* Left side */}
+                            {!shouldHideSide('left') && (
+                                <mesh material={wardrobeMaterial} position={[0, 0, -0.275]}>
+                                    <boxGeometry args={[1, 0.8, 0.02]} />
+                                </mesh>
+                            )}
+
+                            {/* Right side */}
+                            {!shouldHideSide('right') && (
+                                <mesh material={wardrobeMaterial} position={[0, 0, 0.275]}>
+                                    <boxGeometry args={[1, 0.8, 0.02]} />
+                                </mesh>
+                            )}
+
+                            {/* Front panel */}
+                            {!shouldHideSide('front') && (
+                                <mesh position={[0.49, 0, 0]} material={wardrobeMaterial}>
+                                    <boxGeometry args={[0.02, 0.8, 0.55]} />
+                                </mesh>
+                            )}
+
+                            {/* Top */}
+                            <mesh material={wardrobeMaterial} position={[0, 0.4, 0]}>
+                                <boxGeometry args={[1, 0.02, 0.55]} />
+                            </mesh>
+
+                            {/* Bottom */}
+                            <mesh material={wardrobeMaterial} position={[0, -0.4, 0]}>
+                                <boxGeometry args={[1, 0.02, 0.55]} />
+                            </mesh>
+                        </group>
+
+                        {/* Internal storage - only show if cabinet layout is selected */}
+                        {cabinetOption === 'cabinet-layout' && (
+                            <group rotation={getInternalStorageRotation()}>
+                                {renderInternalStorage()}
+                            </group>
+                        )}
+
+                        {/* Active outline */}
                         {isActive && (
-                            <mesh 
-                                material={outlineMaterial} 
-                                position={[0, -(height/2) + 0.4, 0]}
-                                scale={[1.02, 1.02, 1.02]}
-                            >
+                            <mesh material={outlineMaterial} scale={[1.02, 1.02, 1.02]}>
                                 <boxGeometry args={[1, 0.8, 0.6]} />
                             </mesh>
                         )}
