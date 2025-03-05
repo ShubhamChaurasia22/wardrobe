@@ -9,7 +9,7 @@ import WardrobeControls from "./components/WardrobeControls";
 import StyleWardrobes from "./components/StyleWardrobes";
 import { FaCamera, FaArrowLeft } from "react-icons/fa";
 import "./index.css";
-import { ColorOption, InternalStorageType, LayoutConfig } from './types';
+import { ColorOption, InternalStorageType, LayoutConfig, StoragePosition } from './types';
 
 const CameraIcon = FaCamera as unknown as React.FC;
 const BackIcon = FaArrowLeft as unknown as React.FC;
@@ -49,6 +49,7 @@ const App = () => {
         isMetallic: true
     });
     const [activeWardrobeType, setActiveWardrobeType] = useState<number | null>(null);
+    const [selectedStoragePosition, setSelectedStoragePosition] = useState<StoragePosition>('middle');
 
     const initialLayoutConfig = {
         roomDetails: { length: 5, width: 5, height: 2.4 },
@@ -142,7 +143,9 @@ const App = () => {
 
     const handleAddWardrobe = (wall: keyof LayoutConfig, index: number) => {
         if (!selectedModel || wall === "roomDetails") return;
-    
+
+        setActiveWardrobeType(selectedModel); // Add this line to set active wardrobe type immediately
+        
         setLayoutConfig((prevConfig) => {
             const currentWall = prevConfig[wall];
             if (!Array.isArray(currentWall)) return prevConfig;
@@ -151,14 +154,15 @@ const App = () => {
             
             // Add shared properties with default colors
             const commonProps = {
-                type: "wardrobe" as const, // Add 'as const' to ensure correct type
-                modelType: selectedModel, // This will be 1, 2, or 3
-                handlePosition: 'right' as 'left' | 'right', // Add type assertion here
+                type: "wardrobe" as const,
+                modelType: selectedModel,
+                handlePosition: 'right' as 'left' | 'right',
                 cabinetOption: selectedCabinetOption,
                 internalStorage: selectedInternalStorage,
                 color: selectedWardrobeColor,
                 handleColor: selectedHandleColor,
-                internalStorageColor: selectedInternalStorageColor
+                internalStorageColor: selectedInternalStorageColor,
+                storagePosition: 'middle' as StoragePosition // Add default storage position
             };
     
             // Check if there's enough space for double door wardrobe
@@ -183,7 +187,8 @@ const App = () => {
                         ...commonProps,
                         handleType: 'none',
                         height: 0.8,
-                        width: 1.0 // Standard width
+                        width: 1.0,
+                        storagePosition: selectedStoragePosition // Add this line
                     };
                     break;
     
@@ -199,7 +204,7 @@ const App = () => {
                     // Mark next section as extension
                     if (index + 1 < updatedWall.length) {
                         updatedWall[index + 1] = {
-                            type: "wardrobe-extension" as const, // Add 'as const' here too
+                            type: "wardrobe-extension" as const,
                             width: 1.0,
                             parentIndex: index
                         };
@@ -395,6 +400,38 @@ const App = () => {
         }
     };
 
+    const handleStoragePositionChange = (position: StoragePosition) => {
+        
+        if (activeWardrobe && activeWardrobeType === 2) {
+            // Update the state immediately
+            setSelectedStoragePosition(position);
+            
+            // Update the layout config
+            setLayoutConfig(prevConfig => {
+                const { wall, index } = activeWardrobe;
+                const currentWall = prevConfig[wall];
+                if (!Array.isArray(currentWall)) return prevConfig;
+
+                const updatedWall = [...currentWall];
+                if (updatedWall[index].type === "wardrobe" && updatedWall[index].modelType === 2) {
+                    // Create a new object to ensure state updates
+                    updatedWall[index] = {
+                        ...updatedWall[index],
+                        storagePosition: position
+                    };
+                }
+
+                // Create new config object to ensure state updates
+                const newConfig = {
+                    ...prevConfig,
+                    [wall]: updatedWall
+                };
+                addToHistory(newConfig);
+                return newConfig;
+            });
+        }
+    };
+
     // When a wardrobe is selected, update the selected handle to match
     useEffect(() => {
         if (activeWardrobe) {
@@ -403,6 +440,20 @@ const App = () => {
                 const activeSection = wall[activeWardrobe.index];
                 if (activeSection && activeSection.type === "wardrobe" && activeSection.handleType) {
                     setSelectedHandle(activeSection.handleType);
+                }
+            }
+        }
+    }, [activeWardrobe, layoutConfig]);
+
+    // Add this useEffect after your existing useEffect hooks
+    useEffect(() => {
+        if (activeWardrobe) {
+            const wall = layoutConfig[activeWardrobe.wall];
+            if (Array.isArray(wall)) {
+                const activeSection = wall[activeWardrobe.index];
+                if (activeSection?.type === "wardrobe") {
+                    // Update storage position when selecting a wardrobe
+                    setSelectedStoragePosition(activeSection.storagePosition || 'middle');
                 }
             }
         }
@@ -580,6 +631,8 @@ const App = () => {
                     canUndo={currentHistoryIndex > 0 && layoutHistory.length > 1} // Add length check
                     canRedo={currentHistoryIndex < layoutHistory.length - 1}
                     activeWardrobeType={activeWardrobeType}
+                    storagePosition={selectedStoragePosition}
+                    setStoragePosition={handleStoragePositionChange}
                 />
             )}
         </div>

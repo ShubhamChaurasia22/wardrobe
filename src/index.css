@@ -359,6 +359,7 @@ canvas {
 .handle-position-option:not(.enabled) {
   opacity: 0.5;
   cursor: not-allowed;
+  padding: 1.7rem;
 }
 
 .handle-position-option.enabled {
@@ -457,6 +458,7 @@ canvas {
 .storage-position-option:not(.enabled) {
   opacity: 0.5;
   cursor: not-allowed;
+  padding: 2rem;
 }
 
 .storage-position-option.enabled {

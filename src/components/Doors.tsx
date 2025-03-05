@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { InternalStorageType } from '../types';
+import { InternalStorageType, StoragePosition } from '../types';
 
 interface DoorsProps {
     onSelectModel: (modelType: number, handleType?: 'none' | 'straight' | 'fancy' | 'spherical') => void;
@@ -15,6 +15,8 @@ interface DoorsProps {
     internalStorage: InternalStorageType;
     setInternalStorage: (storage: InternalStorageType) => void;
     activeWardrobeType: number | null;
+    storagePosition: StoragePosition;
+    setStoragePosition: (position: StoragePosition) => void;
 }
 
 const Doors = ({ 
@@ -30,7 +32,9 @@ const Doors = ({
     setCabinetOption,
     internalStorage,
     setInternalStorage,
-    activeWardrobeType
+    activeWardrobeType,
+    storagePosition,
+    setStoragePosition
 }: DoorsProps) => {
     // Add useEffect to handle initial model selection
     useEffect(() => {
@@ -41,21 +45,28 @@ const Doors = ({
         }
     }, []);
 
+    // Add this useEffect
+    useEffect(() => {
+        if (activeWardrobeType === 2) {
+            setStoragePosition('middle'); // Set default position when storage block is selected
+        }
+    }, [activeWardrobeType]);
+
     const wardrobeOptions = [
         { 
             id: 1, 
             name: "Single Door", 
-            image: "https://cdn-icons-png.flaticon.com/512/607/607050.png"
+            image: "../assets/open-door-100.png",
         },
         { 
             id: 2,
             name: "Storage Block", 
-            image: "https://cdn-icons-png.flaticon.com/512/1198/1198460.png"
+            image: "../assets/cardboard-box-100.png",
         },
         { 
             id: 3,
             name: "Double Door", 
-            image: "https://cdn-icons-png.flaticon.com/512/1198/1198460.png"
+            image: "../assets/double-door-open-100.png"
         }
     ];
 
@@ -84,6 +95,12 @@ const Doors = ({
         { id: 'rail-shelf-1-drawer' as const, name: "Rail Shelf 1 Drawer" },
         { id: 'rail-shelf-2-drawer' as const, name: "Rail Shelf 2 Drawer" },
         { id: 'rail-shelf-3-drawer' as const, name: "Rail Shelf 3 Drawer" }
+    ];
+
+    const storagePositionOptions = [
+        { id: 'bottom' as const, name: "Bottom" },
+        { id: 'middle' as const, name: "Middle" },
+        { id: 'top' as const, name: "Top" }
     ];
 
     const handleSelectOption = (id: number) => {
@@ -247,6 +264,38 @@ const Doors = ({
                                     : isStorageBlock
                                     ? "Not available for storage block"
                                     : "Enable cabinet layout first"}
+                            </p>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            <div className="section-title">Position Storage Block</div>
+            <div className="storage-position-options">
+                {storagePositionOptions.map((option) => (
+                    <div
+                        key={option.id}
+                        className={`storage-position-option ${
+                            hasActiveWardrobe && activeWardrobeType === 2 ? "enabled" : ""
+                        } ${storagePosition === option.id ? "selected" : ""}`}
+                        onClick={() => {
+                            if (hasActiveWardrobe && activeWardrobeType === 2) {
+                                setStoragePosition(option.id);
+                            }
+                        }}
+                        style={{ 
+                            padding: "2rem",
+                            borderRadius: "8px",
+                            cursor: hasActiveWardrobe && activeWardrobeType === 2 ? "pointer" : "not-allowed",
+                            border: storagePosition === option.id ? "2px solid #e38c6e" : "none"
+                        }}
+                    >
+                        <p>{option.name}</p>
+                        {(!hasActiveWardrobe || activeWardrobeType !== 2) && (
+                            <p className="select-wardrobe-message">
+                                {!hasActiveWardrobe 
+                                    ? "Select a wardrobe first"
+                                    : "Only available for storage block"}
                             </p>
                         )}
                     </div>

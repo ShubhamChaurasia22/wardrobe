@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import CustomTabs from "./CustomTabs";
-import { ColorOption, InternalStorageType } from '../types';
+import { ColorOption, InternalStorageType, StoragePosition } from '../types';
 
 interface StyleWardrobesProps {
     setStage: (stage: "size" | "wardrobe" | "style" | "preview") => void;
@@ -25,6 +25,8 @@ interface StyleWardrobesProps {
     canUndo: boolean;
     canRedo: boolean;
     activeWardrobeType: number | null;
+    storagePosition: StoragePosition;
+    setStoragePosition: (position: StoragePosition) => void;
 }
 
 const StyleWardrobes = ({ 
@@ -49,7 +51,9 @@ const StyleWardrobes = ({
     onRedo,
     canUndo,
     canRedo,
-    activeWardrobeType
+    activeWardrobeType,
+    storagePosition,
+    setStoragePosition
 }: StyleWardrobesProps) => {
     const [activeTab, setActiveTab] = useState("doors");
     // Initialize selectedOption with 1 for single door
@@ -95,6 +99,8 @@ const StyleWardrobes = ({
                 selectedInternalStorageColor={selectedInternalStorageColor}
                 onSelectInternalStorageColor={onSelectInternalStorageColor}
                 activeWardrobeType={activeWardrobeType}
+                storagePosition={storagePosition}
+                setStoragePosition={setStoragePosition}
             />
 
             <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>

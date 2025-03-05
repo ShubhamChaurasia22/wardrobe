@@ -15,6 +15,8 @@ export type InternalStorageType =
     | 'rail-shelf-2-drawer'
     | 'rail-shelf-3-drawer';
 
+export type StoragePosition = 'bottom' | 'middle' | 'top';
+
 export type WallSection = {
     type: "free-space" | "wardrobe" | "wardrobe-extension";
     width: number;
@@ -28,6 +30,7 @@ export type WallSection = {
     internalStorage?: InternalStorageType;
     internalStorageColor?: ColorOption;
     parentIndex?: number;
+    storagePosition?: StoragePosition;
 };
 
 export interface LayoutConfig {

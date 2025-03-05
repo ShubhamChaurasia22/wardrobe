@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo } from "react";  // Add useEffect import
 import * as THREE from "three";
 import { useLoader } from "@react-three/fiber";
 import { TextureLoader } from "three/src/loaders/TextureLoader";
@@ -16,6 +16,7 @@ interface WardrobeModelProps {
     internalStorage?: InternalStorageType;
     wallPosition: 'leftWall' | 'rightWall' | 'backWall'; // Add this new prop
     internalStorageColor?: ColorOption;
+    storagePosition?: 'bottom' | 'top' | 'middle'; // Add this new prop
 }
 
 const WardrobeModel = ({ 
@@ -30,7 +31,9 @@ const WardrobeModel = ({
     internalStorage = 'long-hanging',
     wallPosition, // Add this parameter
     internalStorageColor,
+    storagePosition = 'middle', // Add this parameter
 }: WardrobeModelProps) => {
+
     // Load all textures unconditionally at the top level
     const woodTexture = useLoader(TextureLoader, '/textures/wood.jpg');
     const metalTexture = useLoader(TextureLoader, '/textures/metal.jpg');
@@ -126,7 +129,7 @@ const WardrobeModel = ({
         } else {
             // For single door and storage block
             handleZ = 0.275; // Keep Z position constant
-            handleX = handlePosition === 'left' ? -0.4 : 0.4; // Move along X-axis based on position
+            handleX = handlePosition === 'left' ? -0.28 : 0.4; // Move along X-axis based on position
         }
 
         switch (handleType) {
@@ -417,6 +420,20 @@ const WardrobeModel = ({
         }
     };
 
+    // Add helper function to get storage block position
+    const getStorageBlockPosition = (): number => {
+        const floorHeight = -(height / 2);
+        
+        const positions = {
+            bottom: floorHeight - 0.3,
+            middle: floorHeight + 0.4,
+            top: floorHeight + 1.2
+        };
+
+        const position = positions[storagePosition] || positions.middle;
+        return position;
+    };
+
     const renderModel = () => {
         const floorPosition = -(height / 2);
 
@@ -505,10 +522,12 @@ const WardrobeModel = ({
                 );
 
             case 2: // Storage Block
+                const yPosition = getStorageBlockPosition();
+                
                 return (
                     <group 
                         rotation={getRotation(wallPosition)} 
-                        position={[0, floorPosition + 0.4, -0.3]}
+                        position={[0, yPosition, -0.3]}
                     >
                         <group>
                             {/* Back panel - always show */}

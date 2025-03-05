@@ -5,7 +5,7 @@ import { useLoader } from "@react-three/fiber";
 import { TextureLoader } from "three/src/loaders/TextureLoader";
 import Colors from "./Colors";
 import Doors from "./Doors";
-import { ColorOption, InternalStorageType } from '../types';
+import { ColorOption, InternalStorageType, StoragePosition } from '../types';
 
 interface CustomTabsProps {
     activeTab: string;
@@ -29,6 +29,8 @@ interface CustomTabsProps {
     selectedInternalStorageColor: ColorOption;
     onSelectInternalStorageColor: (option: ColorOption) => void;
     activeWardrobeType: number | null;  // Add this prop
+    storagePosition: StoragePosition;
+    setStoragePosition: (position: StoragePosition) => void;
 }
 
 const CustomTabs = ({
@@ -52,7 +54,9 @@ const CustomTabs = ({
     setInternalStorage,
     selectedInternalStorageColor,
     onSelectInternalStorageColor,
-    activeWardrobeType  // Add this prop
+    activeWardrobeType,  // Add this prop
+    storagePosition,
+    setStoragePosition
 }: CustomTabsProps) => {
     const handleSelect = (index: number) => {
         setActiveTab(index === 0 ? "doors" : "colors");
@@ -80,6 +84,8 @@ const CustomTabs = ({
                     internalStorage={internalStorage}
                     setInternalStorage={setInternalStorage}
                     activeWardrobeType={activeWardrobeType}  // Add this prop
+                    storagePosition={storagePosition}
+                    setStoragePosition={setStoragePosition}
                 />
             </TabPanel>
             <TabPanel>
