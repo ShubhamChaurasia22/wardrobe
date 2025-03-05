@@ -24,6 +24,7 @@ interface StyleWardrobesProps {
     onRedo: () => void;
     canUndo: boolean;
     canRedo: boolean;
+    activeWardrobeType: number | null;
 }
 
 const StyleWardrobes = ({ 
@@ -47,10 +48,17 @@ const StyleWardrobes = ({
     onUndo,
     onRedo,
     canUndo,
-    canRedo
+    canRedo,
+    activeWardrobeType
 }: StyleWardrobesProps) => {
     const [activeTab, setActiveTab] = useState("doors");
+    // Initialize selectedOption with 1 for single door
     const [selectedOption, setSelectedOption] = useState<number>(1);
+
+    // Add useEffect to set initial model
+    useEffect(() => {
+        onSelectModel(1, selectedHandle);
+    }, []);
 
     const handleSetSelectedOption = (value: number | null) => {
         if (value !== null) {
@@ -86,6 +94,7 @@ const StyleWardrobes = ({
                 setInternalStorage={setInternalStorage}
                 selectedInternalStorageColor={selectedInternalStorageColor}
                 onSelectInternalStorageColor={onSelectInternalStorageColor}
+                activeWardrobeType={activeWardrobeType}
             />
 
             <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>

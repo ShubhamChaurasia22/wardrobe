@@ -28,6 +28,7 @@ interface CustomTabsProps {
     setInternalStorage: (storage: InternalStorageType) => void;
     selectedInternalStorageColor: ColorOption;
     onSelectInternalStorageColor: (option: ColorOption) => void;
+    activeWardrobeType: number | null;  // Add this prop
 }
 
 const CustomTabs = ({
@@ -50,7 +51,8 @@ const CustomTabs = ({
     internalStorage,
     setInternalStorage,
     selectedInternalStorageColor,
-    onSelectInternalStorageColor
+    onSelectInternalStorageColor,
+    activeWardrobeType  // Add this prop
 }: CustomTabsProps) => {
     const handleSelect = (index: number) => {
         setActiveTab(index === 0 ? "doors" : "colors");
@@ -77,6 +79,7 @@ const CustomTabs = ({
                     setCabinetOption={setCabinetOption}
                     internalStorage={internalStorage}
                     setInternalStorage={setInternalStorage}
+                    activeWardrobeType={activeWardrobeType}  // Add this prop
                 />
             </TabPanel>
             <TabPanel>

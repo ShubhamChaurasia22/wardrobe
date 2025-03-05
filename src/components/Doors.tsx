@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { InternalStorageType } from '../types';
 
 interface DoorsProps {
@@ -14,6 +14,7 @@ interface DoorsProps {
     setCabinetOption: (option: 'none' | 'cabinet-layout') => void;
     internalStorage: InternalStorageType;
     setInternalStorage: (storage: InternalStorageType) => void;
+    activeWardrobeType: number | null;
 }
 
 const Doors = ({ 
@@ -28,21 +29,31 @@ const Doors = ({
     cabinetOption,
     setCabinetOption,
     internalStorage,
-    setInternalStorage
+    setInternalStorage,
+    activeWardrobeType
 }: DoorsProps) => {
+    // Add useEffect to handle initial model selection
+    useEffect(() => {
+        // Set initial model type (1 for single door) if no option is selected
+        if (!selectedOption) {
+            setSelectedOption(1);
+            onSelectModel(1, selectedHandle);
+        }
+    }, []);
+
     const wardrobeOptions = [
         { 
             id: 1, 
             name: "Single Door", 
             image: "https://cdn-icons-png.flaticon.com/512/607/607050.png"
         },
-        // { 
-        //     id: 2, // Use id 3 since 2 is for storage block
-        //     name: "Storage Block", 
-        //     image: "https://cdn-icons-png.flaticon.com/512/1198/1198460.png"
-        // },
         { 
-            id: 3, // Use id 3 since 2 is for storage block
+            id: 2,
+            name: "Storage Block", 
+            image: "https://cdn-icons-png.flaticon.com/512/1198/1198460.png"
+        },
+        { 
+            id: 3,
             name: "Double Door", 
             image: "https://cdn-icons-png.flaticon.com/512/1198/1198460.png"
         }
@@ -88,6 +99,9 @@ const Doors = ({
 
     // Add helper function to check if current wardrobe is double door
     const isDoubleDoor = selectedOption === 3;
+
+    // Add this check in the JSX for internal storage section
+    const isStorageBlock = selectedOption === 2;
 
     return (
         <div>
@@ -164,26 +178,26 @@ const Doors = ({
                     <div
                         key={position.id}
                         className={`handle-position-option ${
-                            hasActiveWardrobe && !isDoubleDoor ? "enabled" : ""
+                            hasActiveWardrobe && activeWardrobeType !== 3 ? "enabled" : ""
                         } ${handlePosition === position.id ? "selected" : ""}`}
                         onClick={() => 
                             hasActiveWardrobe && 
-                            !isDoubleDoor && 
+                            activeWardrobeType !== 3 && 
                             setHandlePosition(position.id as 'left' | 'right')
                         }
                         style={{ 
                             padding: "1rem",
                             borderRadius: "8px",
-                            cursor: hasActiveWardrobe && !isDoubleDoor ? "pointer" : "not-allowed",
+                            cursor: hasActiveWardrobe && activeWardrobeType !== 3 ? "pointer" : "not-allowed",
                             border: handlePosition === position.id ? "2px solid #e38c6e" : "none"
                         }}
                     >
                         <p>{position.name}</p>
-                        {(!hasActiveWardrobe || isDoubleDoor) && (
+                        {(!hasActiveWardrobe || activeWardrobeType === 3) && (
                             <p className="select-wardrobe-message">
                                 {!hasActiveWardrobe 
                                     ? "Select a wardrobe first"
-                                    : "Handle position not available for double door"}
+                                    : "Not available for double door wardrobe"}
                             </p>
                         )}
                     </div>
@@ -216,19 +230,22 @@ const Doors = ({
                     <div
                         key={option.id}
                         className={`internal-storage-option ${
-                            hasActiveWardrobe && cabinetOption === 'cabinet-layout' ? "enabled" : ""
+                            hasActiveWardrobe && cabinetOption === 'cabinet-layout' && !isStorageBlock ? "enabled" : ""
                         } ${internalStorage === option.id ? "selected" : ""}`}
                         onClick={() => 
                             hasActiveWardrobe && 
                             cabinetOption === 'cabinet-layout' && 
+                            !isStorageBlock &&
                             setInternalStorage(option.id)
                         }
                     >
                         <p>{option.name}</p>
-                        {(!hasActiveWardrobe || cabinetOption !== 'cabinet-layout') && (
+                        {(!hasActiveWardrobe || cabinetOption !== 'cabinet-layout' || isStorageBlock) && (
                             <p className="select-wardrobe-message">
                                 {!hasActiveWardrobe 
                                     ? "Select a wardrobe first" 
+                                    : isStorageBlock
+                                    ? "Not available for storage block"
                                     : "Enable cabinet layout first"}
                             </p>
                         )}

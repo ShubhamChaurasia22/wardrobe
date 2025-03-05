@@ -29,7 +29,7 @@ const WardrobeModel = ({
     cabinetOption = 'none', 
     internalStorage = 'long-hanging',
     wallPosition, // Add this parameter
-    internalStorageColor
+    internalStorageColor,
 }: WardrobeModelProps) => {
     // Load all textures unconditionally at the top level
     const woodTexture = useLoader(TextureLoader, '/textures/wood.jpg');
@@ -117,10 +117,17 @@ const WardrobeModel = ({
 
     const createHandle = (defaultPosition: [number, number, number]) => {
         const [x, y, z] = defaultPosition;
-        // For double door, we don't need to adjust handle X position
-        const handleX = x;
-        const handleZ = modelType === 3 ? z : (handlePosition === 'left' ? -0.275 : 0.275);
-        // Keep rest of handle creation logic the same
+        let handleX, handleZ;
+
+        if (modelType === 3) {
+            // For double door wardrobe, use the passed positions
+            handleX = x;
+            handleZ = z;
+        } else {
+            // For single door and storage block
+            handleZ = 0.275; // Keep Z position constant
+            handleX = handlePosition === 'left' ? -0.4 : 0.4; // Move along X-axis based on position
+        }
 
         switch (handleType) {
             case 'none':
@@ -129,7 +136,7 @@ const WardrobeModel = ({
             case 'straight':
                 return (
                     <group position={[handleX, y, handleZ]}>
-                        <mesh material={currentHandleMaterial} position={[-0.1, 0, 0.31]}>
+                        <mesh material={currentHandleMaterial} position={[0, 0, 0]}>
                             <boxGeometry args={[0.08, 0.4, 0.08]} />
                         </mesh>
                     </group>
@@ -138,16 +145,16 @@ const WardrobeModel = ({
             case 'fancy':
                 return (
                     <group position={[handleX, y, handleZ]}>
-                        <mesh material={currentHandleMaterial} position={[-0.1, 0, 0.31]}>
+                        <mesh material={currentHandleMaterial} position={[-0.1, 0, 0]}>
                             <boxGeometry args={[0.08, 0.4, 0.08]} />
                         </mesh>
-                        <mesh position={[-0.1, 0.2, 0.31]} material={currentHandleMaterial}>
+                        <mesh position={[-0.1, 0.2, 0]} material={currentHandleMaterial}>
                             <boxGeometry args={[0.15, 0.04, 0.15]} />
                         </mesh>
-                        <mesh position={[-0.1, -0.2, 0.31]} material={currentHandleMaterial}>
+                        <mesh position={[-0.1, -0.2, 0]} material={currentHandleMaterial}>
                             <boxGeometry args={[0.15, 0.04, 0.15]} />
                         </mesh>
-                        <mesh position={[-0.1, 0, 0.35]} material={currentHandleMaterial}>
+                        <mesh position={[-0.1, 0, 0.04]} material={currentHandleMaterial}>
                             <sphereGeometry args={[0.06, 16, 16]} />
                         </mesh>
                     </group>
@@ -156,15 +163,15 @@ const WardrobeModel = ({
             case 'spherical':
                 return (
                     <group position={[handleX, y, handleZ]}>
-                        <group rotation={[Math.PI/2, 0, 0]} position={[-0.1, 0, 0.31]}>
+                        <group rotation={[Math.PI/2, 0, 0]} position={[-0.1, 0, 0]}>
                             <mesh material={currentHandleMaterial}>
                                 <cylinderGeometry args={[0.03, 0.03, 0.4, 16]} />
                             </mesh>
                         </group>
-                        <mesh position={[-0.1, 0.2, 0.31]} material={currentHandleMaterial}>
+                        <mesh position={[-0.1, 0.2, 0]} material={currentHandleMaterial}>
                             <sphereGeometry args={[0.06, 16, 16]} />
                         </mesh>
-                        <mesh position={[-0.1, -0.2, 0.31]} material={currentHandleMaterial}>
+                        <mesh position={[-0.1, -0.2, 0]} material={currentHandleMaterial}>
                             <sphereGeometry args={[0.06, 16, 16]} />
                         </mesh>
                     </group>
@@ -286,7 +293,7 @@ const WardrobeModel = ({
                                 material={internalStorageMaterial} 
                                 position={[0, 1.0 - (i * 0.35), 0]}
                             >
-                                <boxGeometry args={[0.9, 0.02, 0.5]} />
+                                <boxGeometry args={[0.9, 0.35, 0.5]} />
                             </mesh>
                         ))}
                     </group>
@@ -310,7 +317,7 @@ const WardrobeModel = ({
                         {/* Single drawer */}
                         <mesh 
                             material={internalStorageMaterial}
-                            position={[0, -0.84, 0]} // Keep original position
+                            position={[0, -0.96, 0]} // Keep original position
                         >
                             <boxGeometry args={[0.9, 0.35, 0.5]} />
                         </mesh>
@@ -337,7 +344,7 @@ const WardrobeModel = ({
                             <mesh 
                                 key={i}
                                 material={internalStorageMaterial}
-                                position={[0, -0.43 - (i * 0.36), 0]}
+                                position={[0, -0.6 - (i * 0.36), 0]}
                             >
                                 <boxGeometry args={[0.9, 0.35, 0.5]} />
                             </mesh>
@@ -365,7 +372,7 @@ const WardrobeModel = ({
                             <mesh 
                                 key={i}
                                 material={internalStorageMaterial}
-                                position={[0, -0.28 - (i * 0.3), 0]}
+                                position={[0, -0.4 - (i * 0.3), 0]}
                             >
                                 <boxGeometry args={[0.9, 0.28, 0.5]} />
                             </mesh>
@@ -479,7 +486,7 @@ const WardrobeModel = ({
                         </group>
 
                         {/* Handle - only show if cabinet layout is not selected */}
-                        {cabinetOption !== 'cabinet-layout' && handleType !== 'none' && createHandle([0.5, 0, 0])}
+                        {cabinetOption !== 'cabinet-layout' && handleType !== 'none' && createHandle([0.49, 0, 0])}
                         
                         {/* Internal storage - show if cabinet layout is selected */}
                         {cabinetOption === 'cabinet-layout' && (
@@ -541,11 +548,9 @@ const WardrobeModel = ({
                             </mesh>
                         </group>
 
-                        {/* Internal storage - only show if cabinet layout is selected */}
-                        {cabinetOption === 'cabinet-layout' && (
-                            <group rotation={getInternalStorageRotation()}>
-                                {renderInternalStorage()}
-                            </group>
+                        {/* Handle - only show if cabinet layout is not selected */}
+                        {cabinetOption !== 'cabinet-layout' && handleType !== 'none' && (
+                            createHandle([0.49, 0, 0])
                         )}
 
                         {/* Active outline */}
@@ -608,8 +613,8 @@ const WardrobeModel = ({
                             {/* Handles - Only show if cabinet layout is not selected */}
                             {cabinetOption !== 'cabinet-layout' && handleType !== 'none' && (
                                 <>
-                                    {createHandle([-0.2, 0, 0])} {/* Left Door Handle */}
-                                    {createHandle([0.4, 0, 0])}  {/* Right Door Handle */}
+                                    {createHandle([-0.2, 0, 0.28])} {/* Left Door Handle */}
+                                    {createHandle([0.2, 0, 0.28])}  {/* Right Door Handle */}
                                 </>
                             )}
 

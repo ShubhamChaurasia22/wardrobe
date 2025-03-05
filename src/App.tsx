@@ -48,6 +48,7 @@ const App = () => {
         color: '#B76E79',
         isMetallic: true
     });
+    const [activeWardrobeType, setActiveWardrobeType] = useState<number | null>(null);
 
     const initialLayoutConfig = {
         roomDetails: { length: 5, width: 5, height: 2.4 },
@@ -152,7 +153,7 @@ const App = () => {
             const commonProps = {
                 type: "wardrobe" as const, // Add 'as const' to ensure correct type
                 modelType: selectedModel, // This will be 1, 2, or 3
-                handlePosition: selectedHandlePosition,
+                handlePosition: 'right' as 'left' | 'right', // Add type assertion here
                 cabinetOption: selectedCabinetOption,
                 internalStorage: selectedInternalStorage,
                 color: selectedWardrobeColor,
@@ -338,23 +339,33 @@ const App = () => {
 
     const handleInternalStorageChange = (storage: InternalStorageType) => {
         if (activeWardrobe) {
-            setSelectedInternalStorage(storage);
-            setLayoutConfig(prevConfig => {
-                const { wall, index } = activeWardrobe;
-                const currentWall = prevConfig[wall];
-                if (!Array.isArray(currentWall)) return prevConfig;
-
-                const updatedWall = [...currentWall];
-                if (updatedWall[index].type === "wardrobe") {
-                    updatedWall[index] = {
-                        ...updatedWall[index],
-                        internalStorage: storage
-                    };
+            const currentWall = layoutConfig[activeWardrobe.wall];
+            // Check if currentWall is an array
+            if (Array.isArray(currentWall)) {
+                const activeSection = currentWall[activeWardrobe.index];
+                // Don't allow internal storage changes for storage blocks
+                if (activeSection?.type === "wardrobe" && activeSection.modelType === 2) {
+                    return;
                 }
-                const newConfig = { ...prevConfig, [wall]: updatedWall };
-                addToHistory(newConfig);
-                return newConfig;
-            });
+                
+                setSelectedInternalStorage(storage);
+                setLayoutConfig(prevConfig => {
+                    const { wall, index } = activeWardrobe;
+                    const currentWall = prevConfig[wall];
+                    if (!Array.isArray(currentWall)) return prevConfig;
+
+                    const updatedWall = [...currentWall];
+                    if (updatedWall[index]?.type === "wardrobe") {
+                        updatedWall[index] = {
+                            ...updatedWall[index],
+                            internalStorage: storage
+                        };
+                    }
+                    const newConfig = { ...prevConfig, [wall]: updatedWall };
+                    addToHistory(newConfig);
+                    return newConfig;
+                });
+            }
         }
     };
 
@@ -425,9 +436,56 @@ const App = () => {
         }
     }, [activeWardrobe, layoutConfig]);
 
+    // Update the existing useEffect that handles active wardrobe selection
+    useEffect(() => {
+        if (activeWardrobe) {
+            const wall = layoutConfig[activeWardrobe.wall];
+            if (Array.isArray(wall)) {
+                const activeSection = wall[activeWardrobe.index];
+                if (activeSection && activeSection.type === "wardrobe") {
+                    // Update model type
+                    setSelectedModel(activeSection.modelType || 1);
+                    // Update handle type
+                    if (activeSection.handleType) {
+                        setSelectedHandle(activeSection.handleType);
+                    }
+                    // Update handle position
+                    if (activeSection.handlePosition) {
+                        setSelectedHandlePosition(activeSection.handlePosition);
+                    } else {
+                        // If no handle position is set, default to 'right'
+                        setSelectedHandlePosition('right');
+                    }
+                    // Update cabinet option and internal storage
+                    setSelectedCabinetOption(activeSection.cabinetOption || 'none');
+                    setSelectedInternalStorage(activeSection.internalStorage || 'long-hanging');
+                }
+            }
+        }
+    }, [activeWardrobe, layoutConfig]);
+
     const handleBackToStyle = () => {
         setStage("style");
         setView("orbit");  // Change from "front" to "orbit"
+    };
+
+    const handleSetActiveWardrobe = (wardrobe: { wall: keyof LayoutConfig; index: number; } | null) => {
+        setActiveWardrobe(wardrobe);
+        if (wardrobe) {
+            const wall = layoutConfig[wardrobe.wall];
+            if (Array.isArray(wall)) {
+                const section = wall[wardrobe.index];
+                if (section && section.type === "wardrobe" && typeof section.modelType === 'number') {
+                    setActiveWardrobeType(section.modelType);
+                } else {
+                    setActiveWardrobeType(null);
+                }
+            } else {
+                setActiveWardrobeType(null);
+            }
+        } else {
+            setActiveWardrobeType(null);
+        }
     };
 
     return (
@@ -435,8 +493,9 @@ const App = () => {
             <Canvas
                 shadows
                 camera={{ 
-                    position: stage === "preview" ? [15, 15, 15] : [0, 0, 5], // Adjust camera position for preview
-                    fov: 50 
+                    // Adjust these values to zoom out the view in preview mode
+                    position: stage === "preview" ? [15, 15, 15] : [0, 0, 5], // Increased distance from [15, 15, 15] to [25, 25, 25]
+                    fov: stage === "preview" ? 45 : 50  // Reduced FOV in preview mode for better perspective
                 }}
                 className="canvas" 
                 style={canvasStyle}
@@ -456,7 +515,7 @@ const App = () => {
                     layoutConfig={layoutConfig} 
                     onAddWardrobe={handleAddWardrobe}
                     activeWardrobe={activeWardrobe}
-                    setActiveWardrobe={setActiveWardrobe}
+                    setActiveWardrobe={handleSetActiveWardrobe}
                 />
                 {stage !== "preview" && <CameraController view={view} />}
                 <OrbitControls 
@@ -520,6 +579,7 @@ const App = () => {
                     onRedo={handleRedo}
                     canUndo={currentHistoryIndex > 0 && layoutHistory.length > 1} // Add length check
                     canRedo={currentHistoryIndex < layoutHistory.length - 1}
+                    activeWardrobeType={activeWardrobeType}
                 />
             )}
         </div>

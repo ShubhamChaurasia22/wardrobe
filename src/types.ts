@@ -23,11 +23,11 @@ export type WallSection = {
     height?: number;
     color?: ColorOption;
     handleColor?: ColorOption;
-    handlePosition?: 'left' | 'right';
+    handlePosition?: 'left' | 'right'; // Make sure this is defined correctly
     cabinetOption?: 'none' | 'cabinet-layout';
     internalStorage?: InternalStorageType;
     internalStorageColor?: ColorOption;
-    parentIndex?: number; // Add this line for double door extension sections
+    parentIndex?: number;
 };
 
 export interface LayoutConfig {
