@@ -18,9 +18,12 @@ interface StyleWardrobesProps {
     setCabinetOption: (option: 'none' | 'cabinet-layout') => void;
     internalStorage: InternalStorageType;
     setInternalStorage: (storage: InternalStorageType) => void;
-    // Add these new props
     selectedInternalStorageColor: ColorOption;
     onSelectInternalStorageColor: (option: ColorOption) => void;
+    onUndo: () => void;
+    onRedo: () => void;
+    canUndo: boolean;
+    canRedo: boolean;
 }
 
 const StyleWardrobes = ({ 
@@ -40,7 +43,11 @@ const StyleWardrobes = ({
     internalStorage,
     setInternalStorage,
     selectedInternalStorageColor,
-    onSelectInternalStorageColor
+    onSelectInternalStorageColor,
+    onUndo,
+    onRedo,
+    canUndo,
+    canRedo
 }: StyleWardrobesProps) => {
     const [activeTab, setActiveTab] = useState("doors");
     const [selectedOption, setSelectedOption] = useState<number>(1);
@@ -83,6 +90,37 @@ const StyleWardrobes = ({
                 selectedInternalStorageColor={selectedInternalStorageColor}
                 onSelectInternalStorageColor={onSelectInternalStorageColor}
             />
+
+            <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
+                <button 
+                    onClick={onUndo}
+                    disabled={!canUndo}
+                    style={{
+                        padding: "10px 20px",
+                        backgroundColor: canUndo ? "#374b40" : "#ccc",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "35px",
+                        cursor: canUndo ? "pointer" : "not-allowed"
+                    }}
+                >
+                    Undo
+                </button>
+                <button 
+                    onClick={onRedo}
+                    disabled={!canRedo}
+                    style={{
+                        padding: "10px 20px",
+                        backgroundColor: canRedo ? "#374b40" : "#ccc",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "35px",
+                        cursor: canRedo ? "pointer" : "not-allowed"
+                    }}
+                >
+                    Redo
+                </button>
+            </div>
 
             <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between" }} className="buttons">
                 <button 

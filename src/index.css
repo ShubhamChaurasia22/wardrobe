@@ -31,6 +31,7 @@ canvas {
   width: 90%;
   border-radius: 10px;
   background-color: white;
+  z-index: 10;
 }
 
 .control-btn,

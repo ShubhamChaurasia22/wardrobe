@@ -92,15 +92,15 @@ const Room = ({
             case 'leftWall':
                 // Reverse the offset calculation for left wall
                 const leftWallOffset = (totalSections - index - 0.5) * sectionWidth - length / 2;
-                return [-width / 2, height / 2, leftWallOffset];
+                return [-width / 2, 1.2, leftWallOffset];
                 
             case 'rightWall':
                 const rightWallOffset = (index + 0.5) * sectionWidth - length / 2;
-                return [width / 2, height / 2, rightWallOffset];
+                return [width / 2, 1.2, rightWallOffset];
                 
             case 'backWall':
                 const backWallOffset = (index + 0.5) * sectionWidth - width / 2;
-                return [backWallOffset, height / 2, -length / 2];
+                return [backWallOffset, 1.2, -length / 2];
                 
             default:
                 return [0, 0, 0];

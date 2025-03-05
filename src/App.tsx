@@ -49,12 +49,36 @@ const App = () => {
         isMetallic: true
     });
 
-    const [layoutConfig, setLayoutConfig] = useState<LayoutConfig>({
+    const initialLayoutConfig = {
         roomDetails: { length: 5, width: 5, height: 2.4 },
         leftWall: Array(5).fill({ width: 1, type: "free-space" }),
         backWall: Array(4).fill({ width: 0.95, type: "free-space" }),
         rightWall: Array(5).fill({ width: 1, type: "free-space" }),
-    });
+    };
+
+    const [layoutConfig, setLayoutConfig] = useState<LayoutConfig>(initialLayoutConfig);
+    const [layoutHistory, setLayoutHistory] = useState<LayoutConfig[]>([initialLayoutConfig]); // Initialize with initial config
+    const [currentHistoryIndex, setCurrentHistoryIndex] = useState(0); // Start at index 0
+
+    const addToHistory = (newConfig: LayoutConfig) => {
+        const newHistory = layoutHistory.slice(0, currentHistoryIndex + 1);
+        setLayoutHistory([...newHistory, newConfig]);
+        setCurrentHistoryIndex(currentHistoryIndex + 1);
+    };
+
+    const handleUndo = () => {
+        if (currentHistoryIndex > 0) {
+            setCurrentHistoryIndex(currentHistoryIndex - 1);
+            setLayoutConfig(layoutHistory[currentHistoryIndex - 1]);
+        }
+    };
+
+    const handleRedo = () => {
+        if (currentHistoryIndex < layoutHistory.length - 1) {
+            setCurrentHistoryIndex(currentHistoryIndex + 1);
+            setLayoutConfig(layoutHistory[currentHistoryIndex + 1]);
+        }
+    };
 
     useEffect(() => {
         const updateCanvasStyle = () => {
@@ -149,7 +173,9 @@ const App = () => {
                 };
             }
             
-            return { ...prevConfig, [wall]: updatedWall };
+            const newConfig = { ...prevConfig, [wall]: updatedWall };
+            addToHistory(newConfig);
+            return newConfig;
         });
 
         setActiveWardrobe({ wall, index });
@@ -173,10 +199,9 @@ const App = () => {
                         handleType
                     };
                 }
-                return {
-                    ...prevConfig,
-                    [wall]: updatedWall
-                };
+                const newConfig = { ...prevConfig, [wall]: updatedWall };
+                addToHistory(newConfig);
+                return newConfig;
             });
         }
     };
@@ -200,10 +225,9 @@ const App = () => {
                     };
                 }
                 
-                return {
-                    ...prevConfig,
-                    [wall]: updatedWall
-                };
+                const newConfig = { ...prevConfig, [wall]: updatedWall };
+                addToHistory(newConfig);
+                return newConfig;
             });
         }
     };
@@ -227,10 +251,9 @@ const App = () => {
                     };
                 }
                 
-                return {
-                    ...prevConfig,
-                    [wall]: updatedWall
-                };
+                const newConfig = { ...prevConfig, [wall]: updatedWall };
+                addToHistory(newConfig);
+                return newConfig;
             });
         }
     };
@@ -251,10 +274,9 @@ const App = () => {
                         handlePosition: position
                     };
                 }
-                return {
-                    ...prevConfig,
-                    [wall]: updatedWall
-                };
+                const newConfig = { ...prevConfig, [wall]: updatedWall };
+                addToHistory(newConfig);
+                return newConfig;
             });
         }
     };
@@ -274,10 +296,9 @@ const App = () => {
                         cabinetOption: option
                     };
                 }
-                return {
-                    ...prevConfig,
-                    [wall]: updatedWall
-                };
+                const newConfig = { ...prevConfig, [wall]: updatedWall };
+                addToHistory(newConfig);
+                return newConfig;
             });
         }
     };
@@ -297,10 +318,9 @@ const App = () => {
                         internalStorage: storage
                     };
                 }
-                return {
-                    ...prevConfig,
-                    [wall]: updatedWall
-                };
+                const newConfig = { ...prevConfig, [wall]: updatedWall };
+                addToHistory(newConfig);
+                return newConfig;
             });
         }
     };
@@ -324,10 +344,9 @@ const App = () => {
                     };
                 }
                 
-                return {
-                    ...prevConfig,
-                    [wall]: updatedWall
-                };
+                const newConfig = { ...prevConfig, [wall]: updatedWall };
+                addToHistory(newConfig);
+                return newConfig;
             });
         }
     };
@@ -464,6 +483,10 @@ const App = () => {
                     setInternalStorage={handleInternalStorageChange}
                     selectedInternalStorageColor={selectedInternalStorageColor}
                     onSelectInternalStorageColor={handleInternalStorageColorChange}
+                    onUndo={handleUndo}
+                    onRedo={handleRedo}
+                    canUndo={currentHistoryIndex > 0 && layoutHistory.length > 1} // Add length check
+                    canRedo={currentHistoryIndex < layoutHistory.length - 1}
                 />
             )}
         </div>
