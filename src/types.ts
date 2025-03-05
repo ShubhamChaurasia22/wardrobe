@@ -15,9 +15,9 @@ export type InternalStorageType =
     | 'rail-shelf-2-drawer'
     | 'rail-shelf-3-drawer';
 
-export interface WallSection {
+export type WallSection = {
+    type: "free-space" | "wardrobe" | "wardrobe-extension";
     width: number;
-    type: string;
     modelType?: number;
     handleType?: 'none' | 'straight' | 'fancy' | 'spherical';
     height?: number;
@@ -27,7 +27,8 @@ export interface WallSection {
     cabinetOption?: 'none' | 'cabinet-layout';
     internalStorage?: InternalStorageType;
     internalStorageColor?: ColorOption;
-}
+    parentIndex?: number; // Add this line for double door extension sections
+};
 
 export interface LayoutConfig {
     roomDetails: {

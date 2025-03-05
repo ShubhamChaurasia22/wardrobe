@@ -49,7 +49,7 @@ const WardrobeModel = ({
     const handleMaterial = useMemo(() => new THREE.MeshStandardMaterial({
         map: metalTexture,
         metalness: 0.8,
-        roughness: 0.2,
+        roughness: 2.2,
         color: 0x888888
     }), [metalTexture]);
 
@@ -117,8 +117,10 @@ const WardrobeModel = ({
 
     const createHandle = (defaultPosition: [number, number, number]) => {
         const [x, y, z] = defaultPosition;
-        // Reduce the offset for left position by using a smaller multiplier
-        const handleX = handlePosition === 'left' ? -(x * 0.5) : x; // Reduced from -x to -(x * 0.6)
+        // For double door, we don't need to adjust handle X position
+        const handleX = x;
+        const handleZ = modelType === 3 ? z : (handlePosition === 'left' ? -0.275 : 0.275);
+        // Keep rest of handle creation logic the same
 
         switch (handleType) {
             case 'none':
@@ -126,7 +128,7 @@ const WardrobeModel = ({
             
             case 'straight':
                 return (
-                    <group position={[handleX, y, z]}>
+                    <group position={[handleX, y, handleZ]}>
                         <mesh material={currentHandleMaterial} position={[-0.1, 0, 0.31]}>
                             <boxGeometry args={[0.08, 0.4, 0.08]} />
                         </mesh>
@@ -135,7 +137,7 @@ const WardrobeModel = ({
             
             case 'fancy':
                 return (
-                    <group position={[handleX, y, z]}>
+                    <group position={[handleX, y, handleZ]}>
                         <mesh material={currentHandleMaterial} position={[-0.1, 0, 0.31]}>
                             <boxGeometry args={[0.08, 0.4, 0.08]} />
                         </mesh>
@@ -153,7 +155,7 @@ const WardrobeModel = ({
             
             case 'spherical':
                 return (
-                    <group position={[handleX, y, z]}>
+                    <group position={[handleX, y, handleZ]}>
                         <group rotation={[Math.PI/2, 0, 0]} position={[-0.1, 0, 0.31]}>
                             <mesh material={currentHandleMaterial}>
                                 <cylinderGeometry args={[0.03, 0.03, 0.4, 16]} />
@@ -209,11 +211,11 @@ const WardrobeModel = ({
 
         switch (wallPosition) {
             case 'backWall':
-                return side === 'front';  // Hide front when on back wall
+                return side === 'back'; // Hide back side for back wall
             case 'leftWall':
-                return side === 'right';  // Hide right side when on left wall
+                return side === 'left'; // Hide left side for left wall
             case 'rightWall':
-                return side === 'front';  // Hide front when on right wall
+                return side === 'right'; // Hide right side for right wall
             default:
                 return false;
         }
@@ -406,11 +408,26 @@ const WardrobeModel = ({
         }
     };
 
+    // Add this new function for double door wardrobe
+    const shouldHideSideDoubleDoor = (side: 'front' | 'back' | 'left' | 'right') => {
+        // If cabinet layout is not selected, don't hide any sides
+        if (cabinetOption !== 'cabinet-layout') return false;
+
+        // Only hide sides when cabinet layout is selected
+        switch (wallPosition) {
+            case 'backWall':
+                return side === 'front';
+            case 'leftWall':
+                return side === 'front';
+            case 'rightWall':
+                return side === 'front';
+            default:
+                return false;
+        }
+    };
+
     const renderModel = () => {
         const floorPosition = -(height / 2);
-
-        // Debug logging for visibility
-        console.log(`Rendering wardrobe on ${wallPosition} wall`);
 
         // Determine which side is facing the user based on wall position
         const shouldHideSide = (side: 'front' | 'back' | 'left' | 'right') => {
@@ -556,6 +573,96 @@ const WardrobeModel = ({
                     </group>
                 );
 
+            case 3: // Double Door Wardrobe
+                return (
+                    <group 
+                        rotation={getRotation(wallPosition)}
+                        position={[0, floorPosition + 1.2, -0.3]}
+                    >
+                        <group>
+                            {/* Back Wall */}
+                            {!shouldHideSideDoubleDoor('back') && (
+                                <mesh material={wardrobeMaterial} position={[0, 0, -0.275]}>
+                                    <boxGeometry args={[2, 2.35, 0.02]} />
+                                </mesh>
+                            )}
+
+                            {/* Left Side Wall */}
+                            {!shouldHideSideDoubleDoor('left') && (
+                                <mesh material={wardrobeMaterial} position={[-1, 0, 0]}>
+                                    <boxGeometry args={[0.02, 2.35, 0.55]} />
+                                </mesh>
+                            )}
+
+                            {/* Right Side Wall */}
+                            {!shouldHideSideDoubleDoor('right') && (
+                                <mesh material={wardrobeMaterial} position={[1, 0, 0]}>
+                                    <boxGeometry args={[0.02, 2.35, 0.55]} />
+                                </mesh>
+                            )}
+
+                            {/* Front Doors */}
+                            {!shouldHideSideDoubleDoor('front') && (
+                                <>
+                                    {/* Left Door */}
+                                    <mesh position={[-0.5, 0, 0.275]} material={wardrobeMaterial}>
+                                        <boxGeometry args={[0.98, 2.35, 0.02]} />
+                                    </mesh>
+                                    
+                                    {/* Right Door */}
+                                    <mesh position={[0.5, 0, 0.275]} material={wardrobeMaterial}>
+                                        <boxGeometry args={[0.98, 2.35, 0.02]} />
+                                    </mesh>
+                                    
+                                    {/* Center Gap Line */}
+                                    <mesh position={[0, 0, 0.275]} material={outlineMaterial}>
+                                        <boxGeometry args={[0.04, 2.35, 0.02]} />
+                                    </mesh>
+                                </>
+                            )}
+
+                            {/* Handles - Only show if cabinet layout is not selected */}
+                            {cabinetOption !== 'cabinet-layout' && handleType !== 'none' && (
+                                <>
+                                    {createHandle([-0.2, 0, 0])} {/* Left Door Handle */}
+                                    {createHandle([0.4, 0, 0])}  {/* Right Door Handle */}
+                                </>
+                            )}
+
+                            {/* Internal Storage - Show when cabinet layout is selected */}
+                            {cabinetOption === 'cabinet-layout' && (
+                                <>
+                                    {/* Left Compartment */}
+                                    <group rotation={getInternalStorageRotation()} position={[-0.5, 0, 0]}>
+                                        {renderInternalStorage()}
+                                    </group>
+                                    {/* Right Compartment */}
+                                    <group rotation={getInternalStorageRotation()} position={[0.5, 0, 0]}>
+                                        {renderInternalStorage()}
+                                    </group>
+                                </>
+                            )}
+
+                            {/* Top Panel */}
+                            <mesh material={wardrobeMaterial} position={[0, 1.175, 0]}>
+                                <boxGeometry args={[2, 0.02, 0.55]} />
+                            </mesh>
+
+                            {/* Bottom Panel */}
+                            <mesh material={wardrobeMaterial} position={[0, -1.175, 0]}>
+                                <boxGeometry args={[2, 0.02, 0.55]} />
+                            </mesh>
+
+                            {/* Active Selection Outline */}
+                            {isActive && (
+                                <mesh material={outlineMaterial} scale={[1.02, 1.02, 1.02]}>
+                                    <boxGeometry args={[2, 2.4, 0.6]} />
+                                </mesh>
+                            )}
+                        </group>
+                    </group>
+                );
+            
             default:
                 return null;
         }

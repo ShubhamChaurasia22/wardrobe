@@ -130,54 +130,87 @@ const App = () => {
     };
 
     const handleSelectModel = (modelType: number, handleType?: 'none' | 'straight' | 'fancy' | 'spherical') => {
-        setSelectedModel(modelType);
-        if (handleType) {
-            setSelectedHandle(handleType);
+        // Only update if the model type has actually changed
+        if (selectedModel !== modelType) {
+            setSelectedModel(modelType);
+            if (handleType) {
+                setSelectedHandle(handleType);
+            }
         }
     };
 
     const handleAddWardrobe = (wall: keyof LayoutConfig, index: number) => {
         if (!selectedModel || wall === "roomDetails") return;
-
+    
         setLayoutConfig((prevConfig) => {
             const currentWall = prevConfig[wall];
             if (!Array.isArray(currentWall)) return prevConfig;
-
+    
             const updatedWall = [...currentWall];
             
             // Add shared properties with default colors
             const commonProps = {
-                type: "wardrobe",
-                modelType: selectedModel,
+                type: "wardrobe" as const, // Add 'as const' to ensure correct type
+                modelType: selectedModel, // This will be 1, 2, or 3
                 handlePosition: selectedHandlePosition,
                 cabinetOption: selectedCabinetOption,
                 internalStorage: selectedInternalStorage,
                 color: selectedWardrobeColor,
                 handleColor: selectedHandleColor,
-                internalStorageColor: selectedInternalStorageColor // Add this
+                internalStorageColor: selectedInternalStorageColor
             };
-
-            if (selectedModel === 2) { // Storage Block
-                updatedWall[index] = {
-                    ...updatedWall[index],
-                    ...commonProps,
-                    handleType: 'none',
-                    height: 0.8
-                };
-            } else { // Single Door Wardrobe
-                updatedWall[index] = {
-                    ...updatedWall[index],
-                    ...commonProps,
-                    handleType: selectedHandle,
-                    height: 2.4
-                };
+    
+            // Check if there's enough space for double door wardrobe
+            if (selectedModel === 3 && index === updatedWall.length - 1) {
+                return prevConfig; // Don't add if not enough space
+            }
+    
+            switch (selectedModel) {
+                case 1: // Single Door
+                    updatedWall[index] = {
+                        ...updatedWall[index],
+                        ...commonProps,
+                        handleType: selectedHandle,
+                        height: 2.4,
+                        width: 1.0 // Standard width
+                    };
+                    break;
+    
+                case 2: // Storage Block
+                    updatedWall[index] = {
+                        ...updatedWall[index],
+                        ...commonProps,
+                        handleType: 'none',
+                        height: 0.8,
+                        width: 1.0 // Standard width
+                    };
+                    break;
+    
+                case 3: // Double Door
+                    // Take up two sections for double door
+                    updatedWall[index] = {
+                        ...updatedWall[index],
+                        ...commonProps,
+                        handleType: selectedHandle,
+                        height: 2.4,
+                        width: 2.0 // Double width
+                    };
+                    // Mark next section as extension
+                    if (index + 1 < updatedWall.length) {
+                        updatedWall[index + 1] = {
+                            type: "wardrobe-extension" as const, // Add 'as const' here too
+                            width: 1.0,
+                            parentIndex: index
+                        };
+                    }
+                    break;
             }
             
             const newConfig = { ...prevConfig, [wall]: updatedWall };
             addToHistory(newConfig);
             return newConfig;
         });
-
+    
         setActiveWardrobe({ wall, index });
     };
 

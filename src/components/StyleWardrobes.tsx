@@ -52,13 +52,10 @@ const StyleWardrobes = ({
     const [activeTab, setActiveTab] = useState("doors");
     const [selectedOption, setSelectedOption] = useState<number>(1);
 
-    useEffect(() => {
-        onSelectModel(1, 'straight');
-    }, [onSelectModel]);
-
     const handleSetSelectedOption = (value: number | null) => {
         if (value !== null) {
             setSelectedOption(value);
+            onSelectModel(value, selectedHandle);
         }
     };
 

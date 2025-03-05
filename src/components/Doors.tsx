@@ -35,12 +35,17 @@ const Doors = ({
             id: 1, 
             name: "Single Door", 
             image: "https://cdn-icons-png.flaticon.com/512/607/607050.png"
-        }
+        },
         // { 
-        //     id: 2, 
+        //     id: 2, // Use id 3 since 2 is for storage block
         //     name: "Storage Block", 
-        //     image: "https://cdn-icons-png.flaticon.com/512/2610/2610956.png"
-        // }
+        //     image: "https://cdn-icons-png.flaticon.com/512/1198/1198460.png"
+        // },
+        { 
+            id: 3, // Use id 3 since 2 is for storage block
+            name: "Double Door", 
+            image: "https://cdn-icons-png.flaticon.com/512/1198/1198460.png"
+        }
     ];
 
     const handleOptions = [

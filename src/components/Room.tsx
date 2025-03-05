@@ -87,19 +87,26 @@ const Room = ({
 
     const getWallSectionPosition = (wall: keyof LayoutConfig, index: number, totalSections: number): [number, number, number] => {
         const sectionWidth = wall === 'backWall' ? width / totalSections : length / totalSections;
+        const sectionOffset = sectionWidth * (index + 0.5);
 
         switch (wall) {
             case 'leftWall':
-                // Reverse the offset calculation for left wall
-                const leftWallOffset = (totalSections - index - 0.5) * sectionWidth - length / 2;
+                // Adjust for double door wardrobe width
+                const leftWallOffset = layoutConfig.leftWall[index].width === 2.0 
+                    ? (totalSections - index - 1) * sectionWidth - length / 2
+                    : (totalSections - index - 0.5) * sectionWidth - length / 2;
                 return [-width / 2, 1.2, leftWallOffset];
                 
             case 'rightWall':
-                const rightWallOffset = (index + 0.5) * sectionWidth - length / 2;
+                const rightWallOffset = layoutConfig.rightWall[index].width === 2.0
+                    ? (index + 1) * sectionWidth - length / 2
+                    : (index + 0.5) * sectionWidth - length / 2;
                 return [width / 2, 1.2, rightWallOffset];
                 
             case 'backWall':
-                const backWallOffset = (index + 0.5) * sectionWidth - width / 2;
+                const backWallOffset = layoutConfig.backWall[index].width === 2.0
+                    ? (index + 1) * sectionWidth - width / 2
+                    : (index + 0.5) * sectionWidth - width / 2;
                 return [backWallOffset, 1.2, -length / 2];
                 
             default:
