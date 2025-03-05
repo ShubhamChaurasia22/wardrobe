@@ -40,6 +40,25 @@ const Room = ({
         const numButtons = layoutConfig[wall].length;
         const buttonWidth = wallWidth / numButtons;
 
+        // Function to check if a double door wardrobe exists at the given index
+        const hasDoubleDoorAt = (index: number) => {
+            const section = layoutConfig[wall][index];
+            return section.type === "wardrobe" && section.modelType === 3;
+        };
+
+        // Function to check if adding a double door at this position would be valid
+        const canAddDoubleDoorAt = (index: number) => {
+            // Can't add double door at the last position
+            if (index === numButtons - 1) return false;
+
+            // Check if there's a double door wardrobe in adjacent positions
+            const hasAdjacentDoubleDoor = 
+                (index > 0 && hasDoubleDoorAt(index - 1)) || // Check previous position
+                (index < numButtons - 2 && hasDoubleDoorAt(index + 1)); // Check next position
+
+            return !hasAdjacentDoubleDoor;
+        };
+
         for (let i = 0; i < numButtons; i++) {
             const isHighlighted = highlightedSection && highlightedSection.wall === wall && highlightedSection.index === i;
             const section = layoutConfig[wall][i];
@@ -63,7 +82,10 @@ const Room = ({
                                         className="add-wardrobes" 
                                         style={{ width: "20px", height: "20px", border: "none", cursor: "pointer" }} 
                                         onClick={() => onAddWardrobe(wall, i)}
-                                        disabled={selectedModel === 2 && i === numButtons - 1} // Disable last button for double door
+                                        disabled={
+                                            (selectedModel === 3 && !canAddDoubleDoorAt(i)) || // Disable if can't add double door here
+                                            (selectedModel === 3 && i === numButtons - 1) // Always disable last button for double door
+                                        }
                                     >
                                         +
                                     </button>
@@ -87,7 +109,7 @@ const Room = ({
 
     const getWallSectionPosition = (wall: keyof LayoutConfig, index: number, totalSections: number): [number, number, number] => {
         const sectionWidth = wall === 'backWall' ? width / totalSections : length / totalSections;
-        const sectionOffset = sectionWidth * (index + 0.5);
+        // const sectionOffset = sectionWidth * (index + 0.5);
 
         switch (wall) {
             case 'leftWall':

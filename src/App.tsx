@@ -9,7 +9,7 @@ import WardrobeControls from "./components/WardrobeControls";
 import StyleWardrobes from "./components/StyleWardrobes";
 import { FaCamera, FaArrowLeft } from "react-icons/fa";
 import "./index.css";
-import { ColorOption, InternalStorageType, WallSection, LayoutConfig } from './types';
+import { ColorOption, InternalStorageType, LayoutConfig } from './types';
 
 const CameraIcon = FaCamera as unknown as React.FC;
 const BackIcon = FaArrowLeft as unknown as React.FC;

@@ -86,6 +86,9 @@ const Doors = ({
         }
     };
 
+    // Add helper function to check if current wardrobe is double door
+    const isDoubleDoor = selectedOption === 3;
+
     return (
         <div>
             <div className="section-title">Wardrobe Style</div>
@@ -160,21 +163,27 @@ const Doors = ({
                 {handlePositionOptions.map((position) => (
                     <div
                         key={position.id}
-                        className={`handle-position-option ${hasActiveWardrobe ? "enabled" : ""} ${
-                            handlePosition === position.id ? "selected" : ""
-                        }`}
-                        onClick={() => hasActiveWardrobe && setHandlePosition(position.id as 'left' | 'right')}
+                        className={`handle-position-option ${
+                            hasActiveWardrobe && !isDoubleDoor ? "enabled" : ""
+                        } ${handlePosition === position.id ? "selected" : ""}`}
+                        onClick={() => 
+                            hasActiveWardrobe && 
+                            !isDoubleDoor && 
+                            setHandlePosition(position.id as 'left' | 'right')
+                        }
                         style={{ 
                             padding: "1rem",
                             borderRadius: "8px",
-                            cursor: hasActiveWardrobe ? "pointer" : "not-allowed",
+                            cursor: hasActiveWardrobe && !isDoubleDoor ? "pointer" : "not-allowed",
                             border: handlePosition === position.id ? "2px solid #e38c6e" : "none"
                         }}
                     >
                         <p>{position.name}</p>
-                        {!hasActiveWardrobe && (
+                        {(!hasActiveWardrobe || isDoubleDoor) && (
                             <p className="select-wardrobe-message">
-                                Select a wardrobe first
+                                {!hasActiveWardrobe 
+                                    ? "Select a wardrobe first"
+                                    : "Handle position not available for double door"}
                             </p>
                         )}
                     </div>

@@ -205,22 +205,6 @@ const WardrobeModel = ({
         }
     };
 
-    // Update shouldHideSide function to match the new rotations
-    const shouldHideSide = (side: 'front' | 'back' | 'left' | 'right') => {
-        if (cabinetOption !== 'cabinet-layout') return false;
-
-        switch (wallPosition) {
-            case 'backWall':
-                return side === 'back'; // Hide back side for back wall
-            case 'leftWall':
-                return side === 'left'; // Hide left side for left wall
-            case 'rightWall':
-                return side === 'right'; // Hide right side for right wall
-            default:
-                return false;
-        }
-    };
-
     const getInternalStoragePosition = (): [number, number, number] => {
         switch (wallPosition) {
             case 'rightWall':
