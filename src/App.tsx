@@ -9,7 +9,7 @@ import WardrobeControls from "./components/WardrobeControls";
 import StyleWardrobes from "./components/StyleWardrobes";
 import { FaCamera, FaArrowLeft } from "react-icons/fa";
 import "./index.css";
-import { ColorOption, InternalStorageType, LayoutConfig, StoragePosition } from './types';
+import { ColorOption, InternalStorageType, LayoutConfig, StoragePosition, DoorStyle } from './types';
 
 const CameraIcon = FaCamera as unknown as React.FC;
 const BackIcon = FaArrowLeft as unknown as React.FC;
@@ -50,6 +50,7 @@ const App = () => {
     });
     const [activeWardrobeType, setActiveWardrobeType] = useState<number | null>(null);
     const [selectedStoragePosition, setSelectedStoragePosition] = useState<StoragePosition>('middle');
+    const [selectedDoorStyle, setSelectedDoorStyle] = useState<DoorStyle>('panel-shaker');
 
     const initialLayoutConfig = {
         roomDetails: { length: 5, width: 5, height: 2.4 },
@@ -109,7 +110,7 @@ const App = () => {
     // Add useEffect to handle view changes when stage changes
     useEffect(() => {
         if (stage === "preview") {
-            setView("orbit");  // Set to orbit view in preview stage
+            setView("orbit");  // Set to orbit view in preview mode
             // Deactivate any selected wardrobe in preview mode
             setActiveWardrobe(null);
         }
@@ -162,7 +163,8 @@ const App = () => {
                 color: selectedWardrobeColor,
                 handleColor: selectedHandleColor,
                 internalStorageColor: selectedInternalStorageColor,
-                storagePosition: 'middle' as StoragePosition // Add default storage position
+                storagePosition: 'middle' as StoragePosition, // Add default storage position
+                doorStyle: selectedDoorStyle // Add door style
             };
     
             // Check if there's enough space for double door wardrobe
@@ -515,6 +517,20 @@ const App = () => {
         }
     }, [activeWardrobe, layoutConfig]);
 
+    // Add this useEffect after your existing useEffect hooks
+    useEffect(() => {
+        if (activeWardrobe) {
+            const wall = layoutConfig[activeWardrobe.wall];
+            if (Array.isArray(wall)) {
+                const activeSection = wall[activeWardrobe.index];
+                if (activeSection && activeSection.type === "wardrobe") {
+                    // Update door style when selecting a wardrobe
+                    setSelectedDoorStyle(activeSection.doorStyle || 'panel-shaker');
+                }
+            }
+        }
+    }, [activeWardrobe, layoutConfig]);
+
     const handleBackToStyle = () => {
         setStage("style");
         setView("orbit");  // Change from "front" to "orbit"
@@ -536,6 +552,29 @@ const App = () => {
             }
         } else {
             setActiveWardrobeType(null);
+        }
+    };
+
+    const handleDoorStyleChange = (style: DoorStyle) => {
+        if (activeWardrobe) {
+            setSelectedDoorStyle(style);
+            
+            setLayoutConfig(prevConfig => {
+                const { wall, index } = activeWardrobe;
+                const currentWall = prevConfig[wall];
+                if (!Array.isArray(currentWall)) return prevConfig;
+
+                const updatedWall = [...currentWall];
+                if (updatedWall[index].type === "wardrobe") {
+                    updatedWall[index] = {
+                        ...updatedWall[index],
+                        doorStyle: style
+                    };
+                }
+                const newConfig = { ...prevConfig, [wall]: updatedWall };
+                addToHistory(newConfig);
+                return newConfig;
+            });
         }
     };
 
@@ -633,6 +672,8 @@ const App = () => {
                     activeWardrobeType={activeWardrobeType}
                     storagePosition={selectedStoragePosition}
                     setStoragePosition={handleStoragePositionChange}
+                    doorStyle={selectedDoorStyle}
+                    setDoorStyle={handleDoorStyleChange}
                 />
             )}
         </div>

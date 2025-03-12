@@ -492,6 +492,49 @@ canvas {
   background-color: rgba(227, 140, 110, 0.1);
 }
 
+.door-style-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 0.5rem;
+  margin: 1rem 0;
+  padding: 0.5rem;
+  width: 100%;
+}
+
+.door-style-option {
+  position: relative;
+  text-align: center;
+  background-color: #f5f5f5;
+  transition: all 0.3s ease;
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  min-width: 0;
+  word-wrap: break-word;
+  border-radius: 8px;
+  border: 2px solid transparent;
+}
+
+.door-style-option:not(.enabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+  padding: 1.7rem;
+}
+
+.door-style-option.enabled {
+  opacity: 1;
+  cursor: pointer;
+}
+
+.door-style-option.enabled:hover {
+  transform: scale(1.05);
+  background-color: #e8e8e8;
+}
+
+.door-style-option.selected {
+  border: 2px solid #e38c6e;
+  background-color: rgba(227, 140, 110, 0.1);
+}
+
 @media screen and (min-width: 480px) {
   .handle-options,
   .cabinet-options,
@@ -508,6 +551,15 @@ canvas {
   .cabinet-option,
   .internal-storage-option,
   .storage-position-option {
+    padding: 1rem;
+    font-size: 1rem;
+  }
+
+  .door-style-options {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+
+  .door-style-option {
     padding: 1rem;
     font-size: 1rem;
   }
@@ -538,6 +590,14 @@ canvas {
   .storage-position-option {
     padding: 1.5rem;
   }
+
+  .door-style-options {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+
+  .door-style-option {
+    padding: 1.5rem;
+  }
 }
 
 @media screen and (min-width: 1024px) {
@@ -552,5 +612,9 @@ canvas {
     bottom: 10%;
     right: 4rem;
     width: 30%;
+  }
+
+  .react-tabs__tab-panel--selected {
+    width: 96%;
   }
 }

@@ -184,6 +184,7 @@ const Room = ({
                                     wallPosition="leftWall"  // Make sure this is passed
                                     internalStorageColor={section.internalStorageColor} // Add this line
                                     storagePosition={section.storagePosition || 'middle'} // Update this line
+                                    doorStyle={section.doorStyle} // Add door style
                                 />
                             </group>
                         ) : null
@@ -220,6 +221,7 @@ const Room = ({
                                     wallPosition="rightWall"  // Make sure this is passed
                                     internalStorageColor={section.internalStorageColor} // Add this line
                                     storagePosition={section.storagePosition || 'middle'} // Update this line
+                                    doorStyle={section.doorStyle} // Add door style
                                 />
                             </group>
                         ) : null
@@ -254,6 +256,7 @@ const Room = ({
                             wallPosition="backWall"  // Make sure this is passed
                             internalStorageColor={section.internalStorageColor} // Add this line
                             storagePosition={section.storagePosition || 'middle'} // Update this line
+                            doorStyle={section.doorStyle} // Add door style
                         />
                     </group>
                 ) : null

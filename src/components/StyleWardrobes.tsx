@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import CustomTabs from "./CustomTabs";
-import { ColorOption, InternalStorageType, StoragePosition } from '../types';
+import { ColorOption, InternalStorageType, StoragePosition, DoorStyle } from '../types';
 
 interface StyleWardrobesProps {
     setStage: (stage: "size" | "wardrobe" | "style" | "preview") => void;
@@ -27,6 +27,8 @@ interface StyleWardrobesProps {
     activeWardrobeType: number | null;
     storagePosition: StoragePosition;
     setStoragePosition: (position: StoragePosition) => void;
+    doorStyle?: DoorStyle;
+    setDoorStyle?: (style: DoorStyle) => void;
 }
 
 const StyleWardrobes = ({ 
@@ -53,13 +55,14 @@ const StyleWardrobes = ({
     canRedo,
     activeWardrobeType,
     storagePosition,
-    setStoragePosition
+    setStoragePosition,
+    doorStyle = 'panel-shaker',
+    setDoorStyle
 }: StyleWardrobesProps) => {
     const [activeTab, setActiveTab] = useState("doors");
-    // Initialize selectedOption with 1 for single door
     const [selectedOption, setSelectedOption] = useState<number>(1);
+    const [internalDoorStyle, setInternalDoorStyle] = useState<DoorStyle>('panel-shaker');
 
-    // Add useEffect to set initial model
     useEffect(() => {
         onSelectModel(1, selectedHandle);
     }, []);
@@ -71,9 +74,19 @@ const StyleWardrobes = ({
         }
     };
 
+    const handleSetDoorStyle = (style: DoorStyle) => {
+        if (setDoorStyle) {
+            setDoorStyle(style);
+        } else {
+            setInternalDoorStyle(style);
+        }
+    };
+
     const handleNext = () => {
         setStage("preview");
     };
+
+    const currentDoorStyle = doorStyle || internalDoorStyle;
 
     return (
         <div className="style-wardrobes">
@@ -101,6 +114,8 @@ const StyleWardrobes = ({
                 activeWardrobeType={activeWardrobeType}
                 storagePosition={storagePosition}
                 setStoragePosition={setStoragePosition}
+                doorStyle={currentDoorStyle}
+                setDoorStyle={handleSetDoorStyle}
             />
 
             <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>

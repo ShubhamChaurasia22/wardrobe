@@ -2,7 +2,7 @@ import React, { useMemo } from "react";  // Add useEffect import
 import * as THREE from "three";
 import { useLoader } from "@react-three/fiber";
 import { TextureLoader } from "three/src/loaders/TextureLoader";
-import { ColorOption, InternalStorageType } from '../types';
+import { ColorOption, InternalStorageType, DoorStyle } from '../types';
 
 interface WardrobeModelProps {
     modelType: number;
@@ -17,6 +17,7 @@ interface WardrobeModelProps {
     wallPosition: 'leftWall' | 'rightWall' | 'backWall'; // Add this new prop
     internalStorageColor?: ColorOption;
     storagePosition?: 'bottom' | 'top' | 'middle'; // Add this new prop
+    doorStyle?: DoorStyle; // Add door style prop
 }
 
 const WardrobeModel = ({ 
@@ -32,6 +33,7 @@ const WardrobeModel = ({
     wallPosition, // Add this parameter
     internalStorageColor,
     storagePosition = 'middle', // Add this parameter
+    doorStyle = 'panel-shaker', // Default to panel-shaker
 }: WardrobeModelProps) => {
 
     // Load all textures unconditionally at the top level
@@ -118,6 +120,191 @@ const WardrobeModel = ({
         return woodMaterial;
     }, [internalStorageColor, internalStorageTexture, woodMaterial]);
 
+    // Create a material for door decorations with shadow effect
+    const shadowMaterial = useMemo(() => {
+        if (color) {
+            const baseColor = new THREE.Color(color.color || '#A0522D');
+            // Make shadow significantly darker with increased contrast
+            const shadowColor = new THREE.Color(
+                Math.max(0, baseColor.r * 0.3), // Multiply by 0.3 instead of subtracting
+                Math.max(0, baseColor.g * 0.3),
+                Math.max(0, baseColor.b * 0.3)
+            );
+            
+            return new THREE.MeshStandardMaterial({
+                color: shadowColor,
+                metalness: color.isMetallic ? 0.6 : 0.2,
+                roughness: color.isMetallic ? 0.4 : 0.9,
+                side: THREE.DoubleSide // Enable double-sided rendering
+            });
+        }
+        return woodMaterial;
+    }, [color, woodMaterial]);
+
+    // Function to render door panel according to the selected style
+    const renderDoorPanel = (position: [number, number, number], size: [number, number, number], isFrontDoor: boolean = true) => {
+        const [x, y, z] = position;
+        const [width, height, depth] = size;
+        
+        // Check if this is a vertical or horizontal panel by comparing dimensions
+        const isVerticalPanel = height > width;
+        
+        // Adjust the orientation and size of decorative elements based on the panel orientation
+        const decorWidth = isVerticalPanel ? width : width;
+        const decorHeight = isVerticalPanel ? height : height;
+        const decorDepth = depth;
+        
+        // For non-front doors, just render a simple panel
+        if (!isFrontDoor) {
+            return (
+                <mesh position={[x, y, z]} material={wardrobeMaterial}>
+                    <boxGeometry args={[width, height, depth]} />
+                </mesh>
+            );
+        }
+        
+        // Increase the Z offset and shadow depth for more pronounced effect
+        const zOffset = 0.05;
+        const shadowDepth = 0.03;
+        
+        // Front door panels with different styles
+        switch (doorStyle) {
+            case 'panel-shaker':
+                return (
+                    <group position={[x, y, z]}>
+                        {/* Main panel */}
+                        <mesh material={wardrobeMaterial}>
+                            <boxGeometry args={[width, height, depth]} />
+                        </mesh>
+                        {/* Inner shadow frame */}
+                        <mesh material={shadowMaterial} position={[0, 0, zOffset * 0.5]}>
+                            <boxGeometry args={[decorWidth * 0.92, decorHeight * 0.92, shadowDepth]} />
+                        </mesh>
+                        {/* Inner panel */}
+                        <mesh material={wardrobeMaterial} position={[0, 0, zOffset]}>
+                            <boxGeometry args={[decorWidth * 0.85, decorHeight * 0.85, decorDepth * 0.2]} />
+                        </mesh>
+                    </group>
+                );
+                
+            case 'panel-eclipse':
+                return (
+                    <group position={[x, y, z]}>
+                        {/* Main panel */}
+                        <mesh material={wardrobeMaterial}>
+                            <boxGeometry args={[width, height, depth]} />
+                        </mesh>
+                        
+                        {/* Shadow frame */}
+                        <mesh material={shadowMaterial} position={[0, 0, zOffset * 0.5]}>
+                            <boxGeometry args={[decorWidth * 0.92, decorHeight * 0.92, shadowDepth]} />
+                        </mesh>
+                        
+                        {/* Four panels with shadows */}
+                        {[[-0.25, 0.25], [0.25, 0.25], [-0.25, -0.25], [0.25, -0.25]].map(([px, py], index) => (
+                            <group key={index}>
+                                <mesh material={shadowMaterial} position={[decorWidth * px, decorHeight * py, zOffset]}>
+                                    <boxGeometry args={[decorWidth * 0.42, decorHeight * 0.42, shadowDepth]} />
+                                </mesh>
+                                <mesh material={wardrobeMaterial} position={[decorWidth * px, decorHeight * py, zOffset + shadowDepth]}>
+                                    <boxGeometry args={[decorWidth * 0.38, decorHeight * 0.38, decorDepth * 0.2]} />
+                                </mesh>
+                            </group>
+                        ))}
+                    </group>
+                );
+                
+            case 'estoril':
+                return (
+                    <group position={[x, y, z]}>
+                        {/* Main panel */}
+                        <mesh material={wardrobeMaterial}>
+                            <boxGeometry args={[width, height, depth]} />
+                        </mesh>
+                        
+                        {/* Shadow frame */}
+                        <mesh material={shadowMaterial} position={[0, 0, zOffset * 0.5]}>
+                            <boxGeometry args={[decorWidth * 0.92, decorHeight * 0.92, shadowDepth]} />
+                        </mesh>
+                        
+                        {/* Decorative edges with shadows */}
+                        {[0.45, -0.45].map((py, index) => (
+                            <group key={index}>
+                                <mesh material={shadowMaterial} position={[0, decorHeight * py, zOffset]}>
+                                    <boxGeometry args={[decorWidth * 0.92, decorHeight * 0.1, shadowDepth]} />
+                                </mesh>
+                                <mesh material={wardrobeMaterial} position={[0, decorHeight * py, zOffset + shadowDepth]}>
+                                    <boxGeometry args={[decorWidth * 0.88, decorHeight * 0.08, decorDepth * 0.2]} />
+                                </mesh>
+                            </group>
+                        ))}
+                    </group>
+                );
+                
+            case 'santana':
+                return (
+                    <group position={[x, y, z]}>
+                        {/* Main panel */}
+                        <mesh material={wardrobeMaterial}>
+                            <boxGeometry args={[width, height, depth]} />
+                        </mesh>
+                        
+                        {/* Shadow background */}
+                        <mesh material={shadowMaterial} position={[0, 0, zOffset * 0.5]}>
+                            <boxGeometry args={[decorWidth * 0.92, decorHeight * 0.92, shadowDepth]} />
+                        </mesh>
+                        
+                        {/* Vertical grooves with shadows */}
+                        {[-0.35, -0.175, 0, 0.175, 0.35].map((offset, index) => (
+                            <group key={index}>
+                                <mesh 
+                                    material={shadowMaterial} 
+                                    position={[
+                                        isVerticalPanel ? decorWidth * offset : 0, 
+                                        isVerticalPanel ? 0 : decorHeight * offset, 
+                                        zOffset
+                                    ]}
+                                >
+                                    <boxGeometry args={[
+                                        isVerticalPanel ? decorWidth * 0.08 : decorWidth * 0.92,
+                                        isVerticalPanel ? decorHeight * 0.92 : decorHeight * 0.08,
+                                        shadowDepth
+                                    ]} />
+                                </mesh>
+                                <mesh 
+                                    material={wardrobeMaterial} 
+                                    position={[
+                                        isVerticalPanel ? decorWidth * offset : 0, 
+                                        isVerticalPanel ? 0 : decorHeight * offset, 
+                                        zOffset + shadowDepth
+                                    ]}
+                                >
+                                    <boxGeometry args={[
+                                        isVerticalPanel ? decorWidth * 0.06 : decorWidth * 0.88,
+                                        isVerticalPanel ? decorHeight * 0.88 : decorHeight * 0.06,
+                                        decorDepth * 0.2
+                                    ]} />
+                                </mesh>
+                            </group>
+                        ))}
+                    </group>
+                );
+                
+            default:
+                // Default case with simple shadow
+                return (
+                    <group position={[x, y, z]}>
+                        <mesh material={wardrobeMaterial}>
+                            <boxGeometry args={[width, height, depth]} />
+                        </mesh>
+                        <mesh material={shadowMaterial} position={[0, 0, zOffset * 0.5]}>
+                            <boxGeometry args={[width * 0.95, height * 0.95, shadowDepth]} />
+                        </mesh>
+                    </group>
+                );
+        }
+    };
+
     const createHandle = (defaultPosition: [number, number, number]) => {
         const [x, y, z] = defaultPosition;
         let handleX, handleZ;
@@ -128,7 +315,7 @@ const WardrobeModel = ({
             handleZ = z;
         } else {
             // For single door and storage block
-            handleZ = 0.275; // Keep Z position constant
+            handleZ = 0.4; // Keep Z position constant
             handleX = handlePosition === 'left' ? -0.28 : 0.4; // Move along X-axis based on position
         }
 
@@ -166,16 +353,13 @@ const WardrobeModel = ({
             case 'spherical':
                 return (
                     <group position={[handleX, y, handleZ]}>
-                        <group rotation={[Math.PI/2, 0, 0]} position={[-0.1, 0, 0]}>
-                            <mesh material={currentHandleMaterial}>
-                                <cylinderGeometry args={[0.03, 0.03, 0.4, 16]} />
-                            </mesh>
-                        </group>
-                        <mesh position={[-0.1, 0.2, 0]} material={currentHandleMaterial}>
-                            <sphereGeometry args={[0.06, 16, 16]} />
+                        {/* Connecting rod */}
+                        <mesh material={currentHandleMaterial} position={[-0.1, 0, 0]}>
+                            <boxGeometry args={[0.08, 0.08, 0.08]} />
                         </mesh>
-                        <mesh position={[-0.1, -0.2, 0]} material={currentHandleMaterial}>
-                            <sphereGeometry args={[0.06, 16, 16]} />
+                        {/* Single sphere */}
+                        <mesh position={[-0.14, 0, 0]} material={currentHandleMaterial}>
+                            <sphereGeometry args={[0.1, 32, 32]} />
                         </mesh>
                     </group>
                 );
@@ -478,18 +662,18 @@ const WardrobeModel = ({
 
                             {/* Right side */}
                             {!shouldHideSide('right') && (
-                                <mesh 
-                                    material={wardrobeMaterial} 
-                                    position={[0, 0, 0.275]}
-                                >
-                                    <boxGeometry args={[1, 2.35, 0.02]} />
-                                </mesh>
+                                <group position={[0, 0, 0.275]} rotation={[0, 0, 0]}>
+                                    {renderDoorPanel([0, 0, 0], [1, Number(modelType) === 2 ? 0.8 : 2.35, 0.08], true)}
+                                </group>
                             )}
 
                             {/* Front panel */}
                             {!shouldHideSide('front') && (
-                                <mesh position={[0.49, 0, 0]} material={wardrobeMaterial}>
-                                    <boxGeometry args={[0.02, 2.35, 0.55]} />
+                                <mesh 
+                                    material={wardrobeMaterial} 
+                                    position={[0.49, 0, 0]}
+                                >
+                                    <boxGeometry args={[0.02, Number(modelType) === 2 ? 0.8 : 2.35, 0.55]} />
                                 </mesh>
                             )}
 
@@ -515,7 +699,7 @@ const WardrobeModel = ({
                         {/* Active outline */}
                         {isActive && (
                             <mesh material={outlineMaterial} scale={[1.02, 1.02, 1.02]}>
-                                <boxGeometry args={[1, 2.4, 0.6]} />
+                                <boxGeometry args={[1, 2.4, 0.75]} />
                             </mesh>
                         )}
                     </group>
@@ -544,15 +728,18 @@ const WardrobeModel = ({
 
                             {/* Right side */}
                             {!shouldHideSide('right') && (
-                                <mesh material={wardrobeMaterial} position={[0, 0, 0.275]}>
-                                    <boxGeometry args={[1, 0.8, 0.02]} />
-                                </mesh>
+                                <group position={[0, 0, 0.275]} rotation={[0, 0, 0]}>
+                                    {renderDoorPanel([0, 0, 0], [1, Number(modelType) === 2 ? 0.8 : 2.35, 0.08], true)}
+                                </group>
                             )}
 
                             {/* Front panel */}
                             {!shouldHideSide('front') && (
-                                <mesh position={[0.49, 0, 0]} material={wardrobeMaterial}>
-                                    <boxGeometry args={[0.02, 0.8, 0.55]} />
+                                <mesh 
+                                    material={wardrobeMaterial} 
+                                    position={[0.49, 0, 0]}
+                                >
+                                    <boxGeometry args={[0.02, Number(modelType) === 2 ? 0.8 : 2.35, 0.55]} />
                                 </mesh>
                             )}
 
@@ -563,7 +750,7 @@ const WardrobeModel = ({
 
                             {/* Bottom */}
                             <mesh material={wardrobeMaterial} position={[0, -0.4, 0]}>
-                                <boxGeometry args={[1, 0.02, 0.55]} />
+                                <boxGeometry args={[1, 0.02, 0.6]} />
                             </mesh>
                         </group>
 
@@ -575,7 +762,7 @@ const WardrobeModel = ({
                         {/* Active outline */}
                         {isActive && (
                             <mesh material={outlineMaterial} scale={[1.02, 1.02, 1.02]}>
-                                <boxGeometry args={[1, 0.8, 0.6]} />
+                                <boxGeometry args={[1, 0.8, 0.7]} />
                             </mesh>
                         )}
                     </group>
@@ -612,15 +799,11 @@ const WardrobeModel = ({
                             {/* Front Doors */}
                             {!shouldHideSideDoubleDoor('front') && (
                                 <>
-                                    {/* Left Door */}
-                                    <mesh position={[-0.5, 0, 0.275]} material={wardrobeMaterial}>
-                                        <boxGeometry args={[0.98, 2.35, 0.02]} />
-                                    </mesh>
+                                    {/* Left Door - Use renderDoorPanel with thicker depth */}
+                                    {renderDoorPanel([-0.5, 0, 0.275], [0.98, 2.35, 0.08])}
                                     
-                                    {/* Right Door */}
-                                    <mesh position={[0.5, 0, 0.275]} material={wardrobeMaterial}>
-                                        <boxGeometry args={[0.98, 2.35, 0.02]} />
-                                    </mesh>
+                                    {/* Right Door - Use renderDoorPanel with thicker depth */}
+                                    {renderDoorPanel([0.5, 0, 0.275], [0.98, 2.35, 0.08])}
                                     
                                     {/* Center Gap Line */}
                                     <mesh position={[0, 0, 0.275]} material={outlineMaterial}>
@@ -632,8 +815,8 @@ const WardrobeModel = ({
                             {/* Handles - Only show if cabinet layout is not selected */}
                             {cabinetOption !== 'cabinet-layout' && handleType !== 'none' && (
                                 <>
-                                    {createHandle([-0.2, 0, 0.28])} {/* Left Door Handle */}
-                                    {createHandle([0.2, 0, 0.28])}  {/* Right Door Handle */}
+                                    {createHandle([-0.2, 0, 0.3])} {/* Left Door Handle */}
+                                    {createHandle([0.3, 0, 0.3])}  {/* Right Door Handle */}
                                 </>
                             )}
 
@@ -664,7 +847,7 @@ const WardrobeModel = ({
                             {/* Active Selection Outline */}
                             {isActive && (
                                 <mesh material={outlineMaterial} scale={[1.02, 1.02, 1.02]}>
-                                    <boxGeometry args={[2, 2.4, 0.6]} />
+                                    <boxGeometry args={[2, 2.4, 0.7]} />
                                 </mesh>
                             )}
                         </group>

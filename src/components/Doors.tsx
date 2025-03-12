@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { InternalStorageType, StoragePosition } from '../types';
+import { DoorStyle, InternalStorageType, StoragePosition } from '../types';
 
 interface DoorsProps {
     onSelectModel: (modelType: number, handleType?: 'none' | 'straight' | 'fancy' | 'spherical') => void;
@@ -17,6 +17,8 @@ interface DoorsProps {
     activeWardrobeType: number | null;
     storagePosition: StoragePosition;
     setStoragePosition: (position: StoragePosition) => void;
+    doorStyle?: DoorStyle;
+    setDoorStyle?: (style: DoorStyle) => void;
 }
 
 const Doors = ({ 
@@ -34,7 +36,9 @@ const Doors = ({
     setInternalStorage,
     activeWardrobeType,
     storagePosition,
-    setStoragePosition
+    setStoragePosition,
+    doorStyle = 'panel-shaker',
+    setDoorStyle
 }: DoorsProps) => {
     // Add useEffect to handle initial model selection
     useEffect(() => {
@@ -103,6 +107,16 @@ const Doors = ({
         { id: 'top' as const, name: "Top" }
     ];
 
+    const doorStyleOptions = [
+        { id: 'panel-shaker' as const, name: "1 Panel Shaker" },
+        { id: 'panel-eclipse' as const, name: "4 Panel Eclipse" },
+        // { id: 'cairo' as const, name: "Cairo" },
+        // { id: 'contemporary-shaker' as const, name: "Contemporary Shaker" },
+        { id: 'estoril' as const, name: "Estoril" },
+        // { id: 'mfc-slab' as const, name: "MFC Slab" },
+        { id: 'santana' as const, name: "Santana" }
+    ];
+
     const handleSelectOption = (id: number) => {
         setSelectedOption(id);
         onSelectModel(id, selectedHandle);
@@ -111,6 +125,12 @@ const Doors = ({
     const handleSelectHandle = (handleType: 'none' | 'straight' | 'fancy' | 'spherical') => {
         if (hasActiveWardrobe) {
             setSelectedHandle(handleType);
+        }
+    };
+
+    const handleSelectDoorStyle = (style: DoorStyle) => {
+        if (hasActiveWardrobe && setDoorStyle) {
+            setDoorStyle(style);
         }
     };
 
@@ -160,6 +180,28 @@ const Doors = ({
                         }}>
                             {option.name}
                         </p>
+                    </div>
+                ))}
+            </div>
+
+            <div className="section-title">Door Style</div>
+            <div className="door-style-options">
+                {doorStyleOptions.map((style) => (
+                    <div
+                        key={style.id}
+                        className={`door-style-option ${
+                            hasActiveWardrobe ? "enabled" : ""
+                        } ${doorStyle === style.id ? "selected" : ""}`}
+                        onClick={() => hasActiveWardrobe && handleSelectDoorStyle(style.id)}
+                    >
+                        <p style={{ margin: 0 }}>
+                            {style.name}
+                        </p>
+                        {!hasActiveWardrobe && (
+                            <p className="select-wardrobe-message">
+                                Select a wardrobe first
+                            </p>
+                        )}
                     </div>
                 ))}
             </div>
