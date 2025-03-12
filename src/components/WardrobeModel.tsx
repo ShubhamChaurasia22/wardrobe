@@ -126,7 +126,7 @@ const WardrobeModel = ({
             const baseColor = new THREE.Color(color.color || '#A0522D');
             // Make shadow significantly darker with increased contrast
             const shadowColor = new THREE.Color(
-                Math.max(0, baseColor.r * 0.3), // Multiply by 0.3 instead of subtracting
+                Math.max(0, baseColor.r * 0.3),
                 Math.max(0, baseColor.g * 0.3),
                 Math.max(0, baseColor.b * 0.3)
             );
@@ -135,172 +135,188 @@ const WardrobeModel = ({
                 color: shadowColor,
                 metalness: color.isMetallic ? 0.6 : 0.2,
                 roughness: color.isMetallic ? 0.4 : 0.9,
-                side: THREE.DoubleSide // Enable double-sided rendering
+                side: THREE.DoubleSide
             });
         }
-        return woodMaterial;
-    }, [color, woodMaterial]);
+        return new THREE.MeshStandardMaterial({
+            color: new THREE.Color('#4B2D1C').multiplyScalar(0.3),
+            metalness: 0.2,
+            roughness: 0.9,
+            side: THREE.DoubleSide
+        });
+    }, [color]);
 
     // Function to render door panel according to the selected style
     const renderDoorPanel = (position: [number, number, number], size: [number, number, number], isFrontDoor: boolean = true) => {
-        const [x, y, z] = position;
         const [width, height, depth] = size;
-        
-        // Check if this is a vertical or horizontal panel by comparing dimensions
-        const isVerticalPanel = height > width;
-        
-        // Adjust the orientation and size of decorative elements based on the panel orientation
-        const decorWidth = isVerticalPanel ? width : width;
-        const decorHeight = isVerticalPanel ? height : height;
-        const decorDepth = depth;
-        
-        // For non-front doors, just render a simple panel
+        const patternDepth = 0.03;
+        const baseDepth = depth - patternDepth;
+
+        // If not front door, render simple panel
         if (!isFrontDoor) {
             return (
-                <mesh position={[x, y, z]} material={wardrobeMaterial}>
+                <mesh position={[...position]} material={wardrobeMaterial}>
                     <boxGeometry args={[width, height, depth]} />
                 </mesh>
             );
         }
-        
-        // Increase the Z offset and shadow depth for more pronounced effect
-        const zOffset = 0.05;
-        const shadowDepth = 0.03;
-        
-        // Front door panels with different styles
+
         switch (doorStyle) {
             case 'panel-shaker':
                 return (
-                    <group position={[x, y, z]}>
-                        {/* Main panel */}
-                        <mesh material={wardrobeMaterial}>
-                            <boxGeometry args={[width, height, depth]} />
+                    <group position={position}>
+                        {/* Base door panel */}
+                        <mesh position={[0, 0, -baseDepth/2]} material={wardrobeMaterial}>
+                            <boxGeometry args={[width, height, baseDepth]} />
                         </mesh>
-                        {/* Inner shadow frame */}
-                        <mesh material={shadowMaterial} position={[0, 0, zOffset * 0.5]}>
-                            <boxGeometry args={[decorWidth * 0.92, decorHeight * 0.92, shadowDepth]} />
-                        </mesh>
-                        {/* Inner panel */}
-                        <mesh material={wardrobeMaterial} position={[0, 0, zOffset]}>
-                            <boxGeometry args={[decorWidth * 0.85, decorHeight * 0.85, decorDepth * 0.2]} />
+                        {/* Inset frame */}
+                        <mesh position={[0, 0, -patternDepth/2]} material={shadowMaterial}>
+                            <boxGeometry args={[width * 0.92, height * 0.92, patternDepth]} />
                         </mesh>
                     </group>
                 );
-                
+
             case 'panel-eclipse':
                 return (
-                    <group position={[x, y, z]}>
-                        {/* Main panel */}
-                        <mesh material={wardrobeMaterial}>
-                            <boxGeometry args={[width, height, depth]} />
+                    <group position={position}>
+                        {/* Base door panel */}
+                        <mesh position={[0, 0, -baseDepth/2]} material={wardrobeMaterial}>
+                            <boxGeometry args={[width, height, baseDepth]} />
                         </mesh>
-                        
-                        {/* Shadow frame */}
-                        <mesh material={shadowMaterial} position={[0, 0, zOffset * 0.5]}>
-                            <boxGeometry args={[decorWidth * 0.92, decorHeight * 0.92, shadowDepth]} />
-                        </mesh>
-                        
-                        {/* Four panels with shadows */}
-                        {[[-0.25, 0.25], [0.25, 0.25], [-0.25, -0.25], [0.25, -0.25]].map(([px, py], index) => (
-                            <group key={index}>
-                                <mesh material={shadowMaterial} position={[decorWidth * px, decorHeight * py, zOffset]}>
-                                    <boxGeometry args={[decorWidth * 0.42, decorHeight * 0.42, shadowDepth]} />
-                                </mesh>
-                                <mesh material={wardrobeMaterial} position={[decorWidth * px, decorHeight * py, zOffset + shadowDepth]}>
-                                    <boxGeometry args={[decorWidth * 0.38, decorHeight * 0.38, decorDepth * 0.2]} />
-                                </mesh>
-                            </group>
-                        ))}
+                        {/* Four inset panels */}
+                        <group position={[0, height/4, -patternDepth/2]}>
+                            <mesh position={[-width/4, 0, 0]} material={shadowMaterial}>
+                                <boxGeometry args={[width * 0.4, height * 0.4, patternDepth]} />
+                            </mesh>
+                            <mesh position={[width/4, 0, 0]} material={shadowMaterial}>
+                                <boxGeometry args={[width * 0.4, height * 0.4, patternDepth]} />
+                            </mesh>
+                        </group>
+                        <group position={[0, -height/4, -patternDepth/2]}>
+                            <mesh position={[-width/4, 0, 0]} material={shadowMaterial}>
+                                <boxGeometry args={[width * 0.4, height * 0.4, patternDepth]} />
+                            </mesh>
+                            <mesh position={[width/4, 0, 0]} material={shadowMaterial}>
+                                <boxGeometry args={[width * 0.4, height * 0.4, patternDepth]} />
+                            </mesh>
+                        </group>
                     </group>
                 );
-                
+
+            case 'cairo':
+                return (
+                    <group position={position}>
+                        {/* Base door panel */}
+                        <mesh position={[0, 0, -baseDepth/2]} material={wardrobeMaterial}>
+                            <boxGeometry args={[width, height, baseDepth]} />
+                        </mesh>
+                        {/* Diamond pattern */}
+                        <group position={[0, 0, -patternDepth/2]}>
+                            {Array.from({ length: 3 }).map((_, rowIndex) => (
+                                <group key={rowIndex} position={[0, (rowIndex - 1) * height/3, 0]}>
+                                    {Array.from({ length: 2 }).map((_, colIndex) => (
+                                        <mesh 
+                                            key={`${rowIndex}-${colIndex}`} 
+                                            position={[(colIndex - 0.5) * width/2, 0, 0]}
+                                            rotation={[0, 0, Math.PI/4]}
+                                            material={shadowMaterial}
+                                        >
+                                            <boxGeometry args={[width * 0.25, width * 0.25, patternDepth]} />
+                                        </mesh>
+                                    ))}
+                                </group>
+                            ))}
+                        </group>
+                    </group>
+                );
+
+            case 'contemporary-shaker':
+                return (
+                    <group position={position}>
+                        {/* Base door panel */}
+                        <mesh position={[0, 0, -baseDepth/2]} material={wardrobeMaterial}>
+                            <boxGeometry args={[width, height, baseDepth]} />
+                        </mesh>
+                        {/* Modern frame pattern */}
+                        <group position={[0, 0, -patternDepth/2]}>
+                            <mesh material={shadowMaterial}>
+                                <boxGeometry args={[width * 0.95, height * 0.95, patternDepth]} />
+                            </mesh>
+                            <mesh material={shadowMaterial}>
+                                <boxGeometry args={[width * 0.85, height * 0.85, patternDepth]} />
+                            </mesh>
+                        </group>
+                    </group>
+                );
+
             case 'estoril':
                 return (
-                    <group position={[x, y, z]}>
-                        {/* Main panel */}
-                        <mesh material={wardrobeMaterial}>
-                            <boxGeometry args={[width, height, depth]} />
+                    <group position={position}>
+                        {/* Base door panel */}
+                        <mesh position={[0, 0, -baseDepth/2]} material={wardrobeMaterial}>
+                            <boxGeometry args={[width, height, baseDepth]} />
                         </mesh>
-                        
-                        {/* Shadow frame */}
-                        <mesh material={shadowMaterial} position={[0, 0, zOffset * 0.5]}>
-                            <boxGeometry args={[decorWidth * 0.92, decorHeight * 0.92, shadowDepth]} />
-                        </mesh>
-                        
-                        {/* Decorative edges with shadows */}
-                        {[0.45, -0.45].map((py, index) => (
-                            <group key={index}>
-                                <mesh material={shadowMaterial} position={[0, decorHeight * py, zOffset]}>
-                                    <boxGeometry args={[decorWidth * 0.92, decorHeight * 0.1, shadowDepth]} />
-                                </mesh>
-                                <mesh material={wardrobeMaterial} position={[0, decorHeight * py, zOffset + shadowDepth]}>
-                                    <boxGeometry args={[decorWidth * 0.88, decorHeight * 0.08, decorDepth * 0.2]} />
-                                </mesh>
-                            </group>
-                        ))}
+                        {/* Decorative edges */}
+                        <group position={[0, 0, -patternDepth/2]}>
+                            <mesh position={[0, height * 0.4, 0]} material={shadowMaterial}>
+                                <boxGeometry args={[width * 0.9, height * 0.05, patternDepth]} />
+                            </mesh>
+                            <mesh position={[0, -height * 0.4, 0]} material={shadowMaterial}>
+                                <boxGeometry args={[width * 0.9, height * 0.05, patternDepth]} />
+                            </mesh>
+                        </group>
                     </group>
                 );
-                
+
+            case 'mfc-slab':
+                return (
+                    <group position={position}>
+                        {/* Single smooth panel with subtle texture */}
+                        <mesh position={[0, 0, -depth/2]} material={wardrobeMaterial}>
+                            <boxGeometry args={[width, height, depth]} />
+                        </mesh>
+                        {/* Add subtle vertical lines for texture */}
+                        <group position={[0, 0, -patternDepth/2]}>
+                            {Array.from({ length: 5 }).map((_, index) => (
+                                <mesh 
+                                    key={index}
+                                    position={[(index - 2) * width/5, 0, 0]}
+                                    material={shadowMaterial}
+                                >
+                                    <boxGeometry args={[width * 0.01, height, patternDepth * 0.5]} />
+                                </mesh>
+                            ))}
+                        </group>
+                    </group>
+                );
+
             case 'santana':
                 return (
-                    <group position={[x, y, z]}>
-                        {/* Main panel */}
-                        <mesh material={wardrobeMaterial}>
-                            <boxGeometry args={[width, height, depth]} />
+                    <group position={position}>
+                        {/* Base door panel */}
+                        <mesh position={[0, 0, -baseDepth/2]} material={wardrobeMaterial}>
+                            <boxGeometry args={[width, height, baseDepth]} />
                         </mesh>
-                        
-                        {/* Shadow background */}
-                        <mesh material={shadowMaterial} position={[0, 0, zOffset * 0.5]}>
-                            <boxGeometry args={[decorWidth * 0.92, decorHeight * 0.92, shadowDepth]} />
-                        </mesh>
-                        
-                        {/* Vertical grooves with shadows */}
-                        {[-0.35, -0.175, 0, 0.175, 0.35].map((offset, index) => (
-                            <group key={index}>
+                        {/* Vertical grooves */}
+                        <group position={[0, 0, -patternDepth/2]}>
+                            {Array.from({ length: 3 }).map((_, index) => (
                                 <mesh 
-                                    material={shadowMaterial} 
-                                    position={[
-                                        isVerticalPanel ? decorWidth * offset : 0, 
-                                        isVerticalPanel ? 0 : decorHeight * offset, 
-                                        zOffset
-                                    ]}
+                                    key={index} 
+                                    position={[(index - 1) * width/3, 0, 0]}
+                                    material={shadowMaterial}
                                 >
-                                    <boxGeometry args={[
-                                        isVerticalPanel ? decorWidth * 0.08 : decorWidth * 0.92,
-                                        isVerticalPanel ? decorHeight * 0.92 : decorHeight * 0.08,
-                                        shadowDepth
-                                    ]} />
+                                    <boxGeometry args={[width * 0.05, height * 0.9, patternDepth]} />
                                 </mesh>
-                                <mesh 
-                                    material={wardrobeMaterial} 
-                                    position={[
-                                        isVerticalPanel ? decorWidth * offset : 0, 
-                                        isVerticalPanel ? 0 : decorHeight * offset, 
-                                        zOffset + shadowDepth
-                                    ]}
-                                >
-                                    <boxGeometry args={[
-                                        isVerticalPanel ? decorWidth * 0.06 : decorWidth * 0.88,
-                                        isVerticalPanel ? decorHeight * 0.88 : decorHeight * 0.06,
-                                        decorDepth * 0.2
-                                    ]} />
-                                </mesh>
-                            </group>
-                        ))}
+                            ))}
+                        </group>
                     </group>
                 );
-                
+
             default:
-                // Default case with simple shadow
                 return (
-                    <group position={[x, y, z]}>
-                        <mesh material={wardrobeMaterial}>
-                            <boxGeometry args={[width, height, depth]} />
-                        </mesh>
-                        <mesh material={shadowMaterial} position={[0, 0, zOffset * 0.5]}>
-                            <boxGeometry args={[width * 0.95, height * 0.95, shadowDepth]} />
-                        </mesh>
-                    </group>
+                    <mesh position={[...position]} material={wardrobeMaterial}>
+                        <boxGeometry args={[width, height, depth]} />
+                    </mesh>
                 );
         }
     };

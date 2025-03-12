@@ -110,10 +110,10 @@ const Doors = ({
     const doorStyleOptions = [
         { id: 'panel-shaker' as const, name: "1 Panel Shaker" },
         { id: 'panel-eclipse' as const, name: "4 Panel Eclipse" },
-        // { id: 'cairo' as const, name: "Cairo" },
-        // { id: 'contemporary-shaker' as const, name: "Contemporary Shaker" },
+        { id: 'cairo' as const, name: "Cairo" },
+        { id: 'contemporary-shaker' as const, name: "Contemporary Shaker" },
         { id: 'estoril' as const, name: "Estoril" },
-        // { id: 'mfc-slab' as const, name: "MFC Slab" },
+        { id: 'mfc-slab' as const, name: "MFC Slab" },
         { id: 'santana' as const, name: "Santana" }
     ];
 

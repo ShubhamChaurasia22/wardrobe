@@ -20,7 +20,10 @@ export type StoragePosition = 'bottom' | 'middle' | 'top';
 export type DoorStyle = 
     | 'panel-shaker'
     | 'panel-eclipse'
+    | 'cairo'
+    | 'contemporary-shaker'
     | 'estoril'
+    | 'mfc-slab'
     | 'santana';
 
 export type WallSection = {
