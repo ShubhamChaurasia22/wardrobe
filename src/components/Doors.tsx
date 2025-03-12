@@ -47,14 +47,14 @@ const Doors = ({
             setSelectedOption(1);
             onSelectModel(1, selectedHandle);
         }
-    }, []);
+    }, [selectedOption, setSelectedOption, onSelectModel, selectedHandle]);
 
     // Add this useEffect
     useEffect(() => {
         if (activeWardrobeType === 2) {
             setStoragePosition('middle'); // Set default position when storage block is selected
         }
-    }, [activeWardrobeType]);
+    }, [activeWardrobeType, setStoragePosition]);
 
     const wardrobeOptions = [
         { 
@@ -111,7 +111,7 @@ const Doors = ({
         { id: 'panel-shaker' as const, name: "1 Panel Shaker" },
         { id: 'panel-eclipse' as const, name: "4 Panel Eclipse" },
         { id: 'cairo' as const, name: "Cairo" },
-        { id: 'contemporary-shaker' as const, name: "Contemporary Shaker" },
+        // { id: 'contemporary-shaker' as const, name: "Contemporary Shaker" },
         { id: 'estoril' as const, name: "Estoril" },
         { id: 'mfc-slab' as const, name: "MFC Slab" },
         { id: 'santana' as const, name: "Santana" }
@@ -133,9 +133,6 @@ const Doors = ({
             setDoorStyle(style);
         }
     };
-
-    // Add helper function to check if current wardrobe is double door
-    const isDoubleDoor = selectedOption === 3;
 
     // Add this check in the JSX for internal storage section
     const isStorageBlock = selectedOption === 2;

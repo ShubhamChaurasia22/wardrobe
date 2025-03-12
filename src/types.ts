@@ -21,7 +21,6 @@ export type DoorStyle =
     | 'panel-shaker'
     | 'panel-eclipse'
     | 'cairo'
-    | 'contemporary-shaker'
     | 'estoril'
     | 'mfc-slab'
     | 'santana';
