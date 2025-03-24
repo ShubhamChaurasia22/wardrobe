@@ -1,0 +1,5 @@
+This directory should contain the following door style images:
+- panel-shaker.jpg
+- panel-eclipse.jpg
+- estoril.jpg
+- santana.jpg 
