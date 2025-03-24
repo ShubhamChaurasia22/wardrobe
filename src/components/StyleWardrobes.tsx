@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import CustomTabs from "./CustomTabs";
 import { ColorOption, InternalStorageType, StoragePosition, DoorStyle } from '../types';
+import './StyleWardrobes.css';
 
 interface StyleWardrobesProps {
     setStage: (stage: "size" | "wardrobe" | "style" | "preview") => void;
@@ -29,6 +30,7 @@ interface StyleWardrobesProps {
     setStoragePosition: (position: StoragePosition) => void;
     doorStyle?: DoorStyle;
     setDoorStyle?: (style: DoorStyle) => void;
+    onBack?: () => void;
 }
 
 const StyleWardrobes = ({ 
@@ -57,17 +59,36 @@ const StyleWardrobes = ({
     storagePosition,
     setStoragePosition,
     doorStyle = 'panel-shaker',
-    setDoorStyle
+    setDoorStyle,
+    onBack
 }: StyleWardrobesProps) => {
     const [activeTab, setActiveTab] = useState("doors");
-    const [selectedOption, setSelectedOption] = useState<number>(1);
+    const [selectedOption, setSelectedOption] = useState<number>(3); // Set default to Double Door (3)
     const [internalDoorStyle, setInternalDoorStyle] = useState<DoorStyle>('panel-shaker');
+    const [totalPrice, setTotalPrice] = useState("1018.90");
+
+    // Wrap callbacks in useCallback to prevent unnecessary re-renders
+    const selectModel = useCallback((modelType: number, handleType?: 'none' | 'straight' | 'fancy' | 'spherical') => {
+        onSelectModel(modelType, handleType || selectedHandle);
+    }, [onSelectModel, selectedHandle]);
 
     useEffect(() => {
-        onSelectModel(1, selectedHandle);
-    }, []);
+        // Initialize the component with default selection
+        selectModel(3); // Default to Double Door (3)
+        
+        // Force the component to show both tabs at start
+        setTimeout(() => {
+            const tabElements = document.querySelectorAll('.custom-tab');
+            tabElements.forEach(tab => {
+                if (tab) {
+                    (tab as HTMLElement).style.display = 'block';
+                }
+            });
+        }, 100);
+    }, [selectModel]); // Now correctly depends on selectModel
 
     const handleSetSelectedOption = (value: number | null) => {
+        console.log("Setting selected option to:", value);
         if (value !== null) {
             setSelectedOption(value);
             onSelectModel(value, selectedHandle);
@@ -85,6 +106,36 @@ const StyleWardrobes = ({
     const handleNext = () => {
         setStage("preview");
     };
+
+    const handleBack = () => {
+        if (onBack) {
+            onBack();
+        } else {
+            setStage("wardrobe");
+        }
+    };
+
+    // Calculate price based on selections
+    useEffect(() => {
+        // Simple pricing model for demonstration
+        let price = 0;
+        
+        // Base price by wardrobe type
+        if (activeWardrobeType === 1) price += 500; // Single door
+        if (activeWardrobeType === 2) price += 400; // Storage block
+        if (activeWardrobeType === 3) price += 900; // Double door
+        
+        // Add premium for certain door styles
+        if (doorStyle === 'panel-eclipse') price += 100;
+        if (doorStyle === 'estoril') price += 150;
+        
+        // Add premium for handle type
+        if (selectedHandle === 'fancy') price += 30;
+        if (selectedHandle === 'spherical') price += 50;
+        
+        // Format the price
+        setTotalPrice(price.toFixed(2));
+    }, [activeWardrobeType, doorStyle, selectedHandle]);
 
     const currentDoorStyle = doorStyle || internalDoorStyle;
 
@@ -117,67 +168,16 @@ const StyleWardrobes = ({
                 doorStyle={currentDoorStyle}
                 setDoorStyle={handleSetDoorStyle}
             />
-
-            <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
-                <button 
-                    onClick={onUndo}
-                    disabled={!canUndo}
-                    style={{
-                        padding: "10px 20px",
-                        backgroundColor: canUndo ? "#374b40" : "#ccc",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "35px",
-                        cursor: canUndo ? "pointer" : "not-allowed"
-                    }}
-                >
-                    Undo
-                </button>
-                <button 
-                    onClick={onRedo}
-                    disabled={!canRedo}
-                    style={{
-                        padding: "10px 20px",
-                        backgroundColor: canRedo ? "#374b40" : "#ccc",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "35px",
-                        cursor: canRedo ? "pointer" : "not-allowed"
-                    }}
-                >
-                    Redo
-                </button>
-            </div>
-
-            <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between" }} className="buttons">
-                <button 
-                    style={{ 
-                        width: "45%", 
-                        padding: "10px", 
-                        color: "white", 
-                        background: "#374b40", 
-                        border: "1px solid #eee", 
-                        textWrap: "nowrap", 
-                        borderRadius: "35px" 
-                    }} 
-                    onClick={() => setStage("wardrobe")}
-                >
-                    Previous
-                </button>
-                <button 
-                    onClick={handleNext}
-                    style={{
-                        width: "45%",
-                        padding: "10px",
-                        color: "white",
-                        background: "#e38c6e",
-                        border: "none",
-                        borderRadius: "35px",
-                        cursor: "pointer"
-                    }}
-                >
-                    Next
-                </button>
+            
+            <div className="action-area">
+                <div className="action-buttons">
+                    <button className="action-button build-button" onClick={handleBack}>
+                        Back
+                    </button>
+                    <button className="action-button review-button" onClick={handleNext}>
+                        Review
+                    </button>
+                </div>
             </div>
         </div>
     );

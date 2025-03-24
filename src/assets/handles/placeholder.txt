@@ -1,0 +1,5 @@
+This directory should contain the following handle style images:
+- none.svg
+- straight.svg
+- fancy.svg
+- spherical.svg 
