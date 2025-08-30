@@ -1,11 +1,12 @@
-import React, { useMemo } from "react";
-import * as THREE from "three";
+import React, { lazy, Suspense } from "react";
 import { Tabs, TabList, Tab, TabPanel } from "react-tabs";
-import { useLoader } from "@react-three/fiber";
-import { TextureLoader } from "three/src/loaders/TextureLoader";
-import Colors from "./Colors";
-import Doors from "./Doors";
 import { ColorOption, InternalStorageType, StoragePosition, DoorStyle } from '../types';
+import "react-tabs/style/react-tabs.css";
+import './CustomTabs.css';
+
+// Lazily load the components to break circular dependencies
+const Doors = lazy(() => import("./Doors"));
+const Colors = lazy(() => import("./Colors"));
 
 interface CustomTabsProps {
     activeTab: string;
@@ -18,8 +19,8 @@ interface CustomTabsProps {
     hasActiveWardrobe: boolean;
     onSelectWardrobeColor: (color: ColorOption) => void;
     onSelectHandleColor: (color: ColorOption) => void;
-    selectedWardrobeColor: ColorOption;  // Change from string to ColorOption
-    selectedHandleColor: ColorOption;    // Change from string to ColorOption
+    selectedWardrobeColor: ColorOption;
+    selectedHandleColor: ColorOption;
     handlePosition: 'left' | 'right';
     setHandlePosition: (position: 'left' | 'right') => void;
     cabinetOption: 'none' | 'cabinet-layout';
@@ -28,11 +29,11 @@ interface CustomTabsProps {
     setInternalStorage: (storage: InternalStorageType) => void;
     selectedInternalStorageColor: ColorOption;
     onSelectInternalStorageColor: (option: ColorOption) => void;
-    activeWardrobeType: number | null;  // Add this prop
+    activeWardrobeType: number | null;
     storagePosition: StoragePosition;
     setStoragePosition: (position: StoragePosition) => void;
-    doorStyle: DoorStyle; // Add door style prop
-    setDoorStyle: (style: DoorStyle) => void; // Add setter for door style
+    doorStyle: DoorStyle;
+    setDoorStyle: (style: DoorStyle) => void;
 }
 
 const CustomTabs = ({
@@ -56,54 +57,66 @@ const CustomTabs = ({
     setInternalStorage,
     selectedInternalStorageColor,
     onSelectInternalStorageColor,
-    activeWardrobeType,  // Add this prop
+    activeWardrobeType,
     storagePosition,
     setStoragePosition,
     doorStyle,
     setDoorStyle
 }: CustomTabsProps) => {
     const handleSelect = (index: number) => {
+        console.log("Tab selected:", index === 0 ? "doors" : "colors");
         setActiveTab(index === 0 ? "doors" : "colors");
     };
 
+    // Loading component while lazy-loaded components are being fetched
+    const LoadingFallback = () => (
+        <div style={{ padding: "20px", textAlign: "center" }}>
+            Loading...
+        </div>
+    );
+
     return (
-        <Tabs selectedIndex={activeTab === "doors" ? 0 : 1} onSelect={handleSelect}>
-            <TabList>
-                <Tab>Doors</Tab>
-                <Tab>Colors</Tab>
+        <Tabs selectedIndex={activeTab === "doors" ? 0 : 1} onSelect={handleSelect} className="custom-tabs">
+            <TabList className="custom-tab-list">
+                <Tab className={`custom-tab ${activeTab === "doors" ? "active-tab" : ""}`}>Door Options</Tab>
+                <Tab className={`custom-tab ${activeTab === "colors" ? "active-tab" : ""}`}>Colours</Tab>
             </TabList>
 
-            <TabPanel>
-                <Doors 
-                    onSelectModel={onSelectModel}
-                    selectedHandle={selectedHandle}
-                    setSelectedHandle={setSelectedHandle}
-                    selectedOption={selectedOption}
-                    setSelectedOption={setSelectedOption}
-                    hasActiveWardrobe={hasActiveWardrobe}
-                    handlePosition={handlePosition}
-                    setHandlePosition={setHandlePosition}
-                    cabinetOption={cabinetOption}
-                    setCabinetOption={setCabinetOption}
-                    internalStorage={internalStorage}
-                    setInternalStorage={setInternalStorage}
-                    activeWardrobeType={activeWardrobeType}  // Add this prop
-                    storagePosition={storagePosition}
-                    setStoragePosition={setStoragePosition}
-                    doorStyle={doorStyle}
-                    setDoorStyle={setDoorStyle}
-                />
+            <TabPanel className="custom-tab-panel">
+                <Suspense fallback={<LoadingFallback />}>
+                    <Doors 
+                        onSelectModel={onSelectModel}
+                        selectedHandle={selectedHandle}
+                        setSelectedHandle={setSelectedHandle}
+                        selectedOption={selectedOption}
+                        setSelectedOption={setSelectedOption}
+                        hasActiveWardrobe={hasActiveWardrobe}
+                        handlePosition={handlePosition}
+                        setHandlePosition={setHandlePosition}
+                        cabinetOption={cabinetOption}
+                        setCabinetOption={setCabinetOption}
+                        internalStorage={internalStorage}
+                        setInternalStorage={setInternalStorage}
+                        activeWardrobeType={activeWardrobeType}
+                        storagePosition={storagePosition}
+                        setStoragePosition={setStoragePosition}
+                        doorStyle={doorStyle}
+                        setDoorStyle={setDoorStyle}
+                    />
+                </Suspense>
             </TabPanel>
-            <TabPanel>
-                <Colors 
-                    onSelectWardrobeColor={onSelectWardrobeColor}
-                    onSelectHandleColor={onSelectHandleColor}
-                    onSelectInternalStorageColor={onSelectInternalStorageColor}
-                    selectedWardrobeColor={selectedWardrobeColor}
-                    selectedHandleColor={selectedHandleColor}
-                    selectedInternalStorageColor={selectedInternalStorageColor}
-                    hasActiveWardrobe={hasActiveWardrobe}
-                />
+            <TabPanel className="custom-tab-panel">
+                <Suspense fallback={<LoadingFallback />}>
+                    <Colors 
+                        onSelectWardrobeColor={onSelectWardrobeColor}
+                        onSelectHandleColor={onSelectHandleColor}
+                        onSelectInternalStorageColor={onSelectInternalStorageColor}
+                        selectedWardrobeColor={selectedWardrobeColor}
+                        selectedHandleColor={selectedHandleColor}
+                        selectedInternalStorageColor={selectedInternalStorageColor}
+                        hasActiveWardrobe={hasActiveWardrobe}
+                    />
+                </Suspense>
             </TabPanel>
         </Tabs>
     );

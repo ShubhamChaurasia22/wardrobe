@@ -1,18 +1,19 @@
-import React, { useMemo } from "react";  // Add useEffect import
-import * as THREE from "three";
+import React, { useMemo } from "react";
 import { useLoader } from "@react-three/fiber";
-import { TextureLoader } from "three/src/loaders/TextureLoader";
-import { ColorOption, InternalStorageType, DoorStyle } from '../types';
+import { TextureLoader } from "three";
+import * as THREE from "three";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { ColorOption, InternalStorageType, DoorStyle, StoragePosition } from '../types';
 
 interface WardrobeModelProps {
     modelType: number;
     handleType?: 'none' | 'straight' | 'fancy' | 'spherical';
     isActive?: boolean;
-    height?: number;
+    height: number;
     color?: ColorOption;
     handleColor?: ColorOption;
     handlePosition?: 'left' | 'right';
-    cabinetOption?: 'none' | 'cabinet-layout';
+    cabinetOption?: 'none' | 'cabinet-layout' | 'with-storage';
     internalStorage?: InternalStorageType;
     wallPosition: 'leftWall' | 'rightWall' | 'backWall'; // Add this new prop
     internalStorageColor?: ColorOption;
@@ -20,11 +21,68 @@ interface WardrobeModelProps {
     doorStyle?: DoorStyle; // Add door style prop
 }
 
+// Default door image for fallback
+const DEFAULT_DOOR_IMAGE = '/assets/default.png';
+
+// Function to get texture URL for door style - moved outside component to fix dependency issues
+const getTextureUrlForDoorStyle = (doorStyle: DoorStyle = 'panel-shaker') => {
+    // Fallback textures for different door styles
+    const fallbackTextures: Record<string, string> = {
+        'panel-shaker': 'https://img.freepik.com/free-photo/wooden-texture_1422-300.jpg',
+        'panel-eclipse': 'https://img.freepik.com/free-photo/wooden-parquet-texture-background_1339-5269.jpg',
+        'estoril': 'https://img.freepik.com/free-photo/dark-wooden-texture_24837-382.jpg',
+        'santana': 'https://img.freepik.com/free-photo/wood-painted-white-texture-background_53876-167459.jpg'
+    };
+    
+    // Return appropriate fallback based on door style
+    return fallbackTextures[doorStyle] || fallbackTextures['panel-shaker'];
+};
+
+// Get wall rotation - moved outside component
+const getRotation = (wallPosition?: string): [number, number, number] => {
+    switch (wallPosition) {
+        case 'leftWall':
+            return [0, Math.PI / 2, 0];
+        case 'rightWall':
+            return [0, -Math.PI / 2, 0];
+        case 'backWall':
+            return [0, 0, 0];
+        default:
+            return [0, 0, 0];
+    }
+};
+
+// Create internal storage material function
+const createInternalStorageMaterial = (internalStorageColor?: ColorOption, internalStorageTexture?: THREE.Texture, woodMaterial?: THREE.MeshStandardMaterial) => {
+    if (internalStorageColor) {
+        return new THREE.MeshStandardMaterial({
+            color: internalStorageColor.color || '#ffffff',
+            metalness: internalStorageColor.isMetallic ? 0.8 : 0.2,
+            roughness: internalStorageColor.isMetallic ? 0.2 : 0.8
+        });
+    }
+    return new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.7 });
+};
+
+// Function to get internal storage position
+const getInternalStoragePosition = (wallPosition?: string): [number, number, number] => {
+    switch (wallPosition) {
+        case 'rightWall':
+            return [0, -0.2, 0]; // Lower Y position for right wall
+        case 'backWall':
+            return [0, 0, 0];  // Higher Y position for back wall
+        case 'leftWall':
+            return [0, 0, 0];    // Normal Y position for left wall
+        default:
+            return [-0.45, 0, 0];
+    }
+};
+
 const WardrobeModel = ({ 
     modelType, 
     handleType = 'straight', 
     isActive = false, 
-    height = 2.4, 
+    height, 
     color, 
     handleColor, 
     handlePosition = 'right', 
@@ -35,619 +93,171 @@ const WardrobeModel = ({
     storagePosition = 'middle', // Add this parameter
     doorStyle = 'panel-shaker', // Default to panel-shaker
 }: WardrobeModelProps) => {
+    console.log('Rendering WardrobeModel:', { 
+        modelType, 
+        handleType, 
+        isActive, 
+        wallPosition, 
+        doorStyle 
+    });
+
+    // Load the door texture directly using useLoader
+    const doorTexture = useLoader(TextureLoader, DEFAULT_DOOR_IMAGE);
 
     // Load all textures unconditionally at the top level
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const woodTexture = useLoader(TextureLoader, '/textures/wood.jpg');
     const metalTexture = useLoader(TextureLoader, '/textures/metal.jpg');
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const colorTexture = useLoader(TextureLoader, color?.texture || '/textures/wood.jpg');
     const handleColorTexture = useLoader(TextureLoader, handleColor?.texture || '/textures/metal.jpg');
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const internalStorageTexture = useLoader(TextureLoader, internalStorageColor?.texture || '/textures/wood.jpg');
 
-    // Create materials using useMemo
-    const woodMaterial = useMemo(() => new THREE.MeshStandardMaterial({
-        map: woodTexture,
-        metalness: 0.2,
-        roughness: 0.8,
-        color: 0xA0522D  // Add a base color to make wood more visible
-    }), [woodTexture]);
+    // Function to get the door color based on the color prop
+    const getDoorColor = () => {
+        if (color && color.id) {
+            return color.color || "#ffffff";
+        }
+        return "#ffffff"; // Default color if none selected
+    };
+    
+    // Load the door overlay texture with error handling
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const doorOverlayTexture = useMemo(() => {
+        try {
+            // Try loading from local assets first, with fallback to a placeholder URL
+            const localImagePath = '/assets/default.png';
+            const fallbackImageUrl = getTextureUrlForDoorStyle();
+            
+            const texture = new THREE.TextureLoader().load(
+                localImagePath, 
+                // onLoad callback
+                (loadedTexture) => {
+                    console.log('Door texture loaded successfully');
+                    // Set texture properties for better appearance
+                    loadedTexture.wrapS = loadedTexture.wrapT = THREE.RepeatWrapping;
+                    loadedTexture.repeat.set(1, 1);
+                    loadedTexture.needsUpdate = true;
+                },
+                // onProgress callback (not used but required for the next callback)
+                undefined,
+                // onError callback - try the fallback URL
+                (err) => {
+                    console.error('Error loading local door texture, trying fallback:', err);
+                    return new THREE.TextureLoader().load(
+                        fallbackImageUrl,
+                        (fallbackTexture) => {
+                            console.log('Fallback texture loaded successfully');
+                            fallbackTexture.wrapS = fallbackTexture.wrapT = THREE.RepeatWrapping;
+                            fallbackTexture.repeat.set(1, 1);
+                            fallbackTexture.needsUpdate = true;
+                        },
+                        undefined,
+                        (fallbackErr) => {
+                            console.error('Failed to load fallback texture:', fallbackErr);
+                        }
+                    );
+                }
+            );
+            return texture;
+        } catch (error) {
+            console.error('Failed to create door texture:', error);
+            return null;
+        }
+    }, []); // Remove the dependencies that are causing warnings
 
-    const handleMaterial = useMemo(() => new THREE.MeshStandardMaterial({
+    // Enhanced materials
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const woodMaterial = useMemo(() => {
+        return new THREE.MeshStandardMaterial({
+            color: "#2f4d3a", // Dark teal/green like in the reference image
+            roughness: 0.7,
+            metalness: 0.2,
+            shadowSide: THREE.FrontSide,
+            side: THREE.DoubleSide
+        });
+    }, []);
+
+    // Create materials using useMemo
+    const metalMaterial = useMemo(() => new THREE.MeshStandardMaterial({
         map: metalTexture,
         metalness: 0.8,
         roughness: 2.2,
         color: 0x888888
     }), [metalTexture]);
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const outlineMaterial = useMemo(() => new THREE.MeshBasicMaterial({
         color: '#e38c6e',
         wireframe: true
     }), []);
 
-    // Create wardrobe material based on props
+    // Enhanced door materials based on selected color
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const wardrobeMaterial = useMemo(() => {
-        if (color) {
-            if (color.texture) {
-                return new THREE.MeshStandardMaterial({
-                    map: colorTexture,
-                    metalness: color.isMetallic ? 0.8 : 0.2,
-                    roughness: color.isMetallic ? 0.2 : 0.8
-                });
-            }
+        if (color && color.id !== 'white') {
+            const baseColor = new THREE.Color(color.color || '#2f4d3a'); // Default to teal if not specified
+            
+            // Return a material with better properties
             return new THREE.MeshStandardMaterial({
-                color: color.color,
+                color: baseColor,
+                roughness: color.isMetallic ? 0.3 : 0.7,
                 metalness: color.isMetallic ? 0.8 : 0.2,
-                roughness: color.isMetallic ? 0.2 : 0.8
+                shadowSide: THREE.FrontSide,
+                side: THREE.DoubleSide,
+                envMapIntensity: color.isMetallic ? 1.0 : 0.5
             });
         }
+        // If no color is selected, use the default teal
         return woodMaterial;
-    }, [color, colorTexture, woodMaterial]);
+    }, [color, woodMaterial]);
 
-    // Create handle material based on props
+    // Handle material based on handle color selection and metallic property
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const currentHandleMaterial = useMemo(() => {
-        if (handleColor) {
-            if (handleColor.texture) {
-                return new THREE.MeshStandardMaterial({
-                    map: handleColorTexture,
-                    metalness: handleColor.isMetallic ? 0.8 : 0.2,
-                    roughness: handleColor.isMetallic ? 0.2 : 0.8
-                });
-            }
+        if (handleColor && handleColor.id !== 'chrome') {
             return new THREE.MeshStandardMaterial({
-                color: handleColor.color,
+                color: new THREE.Color(handleColor.color || '#888888'),
+                roughness: handleColor.isMetallic ? 0.2 : 0.7,
                 metalness: handleColor.isMetallic ? 0.8 : 0.2,
-                roughness: handleColor.isMetallic ? 0.2 : 0.8
+                map: handleColorTexture,
+                envMapIntensity: handleColor.isMetallic ? 1.0 : 0.5
             });
         }
-        return handleMaterial;
-    }, [handleColor, handleColorTexture, handleMaterial]);
+        return metalMaterial;
+    }, [handleColor, handleColorTexture, metalMaterial]);
 
-    // Create internal storage material
-    const internalStorageMaterial = useMemo(() => {
-        if (internalStorageColor) {
-            if (internalStorageColor.texture) {
-                return new THREE.MeshStandardMaterial({
-                    map: internalStorageTexture,
-                    metalness: internalStorageColor.isMetallic ? 0.8 : 0.2,
-                    roughness: internalStorageColor.isMetallic ? 0.2 : 0.8
-                });
-            }
-            return new THREE.MeshStandardMaterial({
-                color: internalStorageColor.color,
-                metalness: internalStorageColor.isMetallic ? 0.8 : 0.2,
-                roughness: internalStorageColor.isMetallic ? 0.2 : 0.8
-            });
-        }
-        return woodMaterial;
-    }, [internalStorageColor, internalStorageTexture, woodMaterial]);
-
-    // Create base material for the door
-    const doorMaterial = useMemo(() => {
-        if (!color) return new THREE.MeshStandardMaterial({ color: '#B76E79' });
-        const material = new THREE.MeshStandardMaterial({
-            map: color.texture ? colorTexture : null,
-            color: color.texture ? undefined : color.color,
-            metalness: color.isMetallic ? 0.3 : 0.1,
-            roughness: color.isMetallic ? 0.5 : 0.8,
-            envMapIntensity: 1.2,
-            side: THREE.DoubleSide
-        });
-        return material;
-    }, [color, colorTexture]);
-
-    // Create shadow material with slightly darker color
+    // Door shadow material for depth
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const doorShadowMaterial = useMemo(() => {
-        if (!color) return new THREE.MeshStandardMaterial({ color: '#8B4F57' });
-        const material = new THREE.MeshStandardMaterial({
-            map: color.texture ? colorTexture : null,
-            metalness: color.isMetallic ? 0.3 : 0.1,
-            roughness: color.isMetallic ? 0.5 : 0.8,
-            envMapIntensity: 1.2,
-            side: THREE.DoubleSide
+        return new THREE.MeshStandardMaterial({
+            color: "#000000",
+            transparent: true,
+            opacity: 0.1,
+            side: THREE.FrontSide
         });
-        if (color.texture) {
-            material.color = new THREE.Color(0.7, 0.7, 0.7);  // Darken the texture
-        } else {
-            const baseColor = new THREE.Color(color.color);
-            material.color = new THREE.Color(baseColor.r * 0.7, baseColor.g * 0.7, baseColor.b * 0.7);
-        }
-        return material;
-    }, [color, colorTexture]);
-
-    // Function to render door panel according to the selected style
-    const renderDoorPanel = (position: [number, number, number], size: [number, number, number], isFrontDoor: boolean = true) => {
-        const [width, height, depth] = size;
-        const baseDepth = 0.04;  // Increased base door thickness
-        const panelDepth = 0.02;  // Panel inset depth
-        const frameWidth = 0.08;  // Width of the frame around panels
-        const panelGap = 0.02;   // Gap between panels
-
-        switch (doorStyle) {
-            case 'panel-shaker':
-                return (
-                    <group position={position}>
-                        {/* Base door */}
-                        <mesh position={[0, 0, 0]} material={doorMaterial}>
-                            <boxGeometry args={[width, height, baseDepth]} />
-                        </mesh>
-
-                        {/* Single center panel */}
-                        <group position={[0, 0, baseDepth/2]}>
-                            {/* Panel frame */}
-                            <mesh material={doorShadowMaterial}>
-                                <boxGeometry args={[width - frameWidth*2, height - frameWidth*2, panelDepth]} />
-                            </mesh>
-                            {/* Panel center */}
-                            <mesh position={[0, 0, panelDepth/2]} material={doorMaterial}>
-                                <boxGeometry args={[width - frameWidth*3, height - frameWidth*3, panelDepth/2]} />
-                            </mesh>
-                        </group>
-                    </group>
-                );
-
-            case 'panel-eclipse':
-                return (
-                    <group position={position}>
-                        {/* Base door */}
-                        <mesh position={[0, 0, 0]} material={doorMaterial}>
-                            <boxGeometry args={[width, height, baseDepth]} />
-                        </mesh>
-
-                        {/* Four panels in 2x2 grid */}
-                        {[[-1, -1], [-1, 1], [1, -1], [1, 1]].map(([x, y], i) => (
-                            <group key={i} position={[x * (width/4 - frameWidth/2), y * (height/4 - frameWidth/2), baseDepth/2]}>
-                                {/* Panel frame */}
-                                <mesh material={doorShadowMaterial}>
-                                    <boxGeometry args={[width/2 - frameWidth, height/2 - frameWidth, panelDepth]} />
-                                </mesh>
-                                {/* Panel center */}
-                                <mesh position={[0, 0, panelDepth/2]} material={doorMaterial}>
-                                    <boxGeometry args={[width/2 - frameWidth*2, height/2 - frameWidth*2, panelDepth/2]} />
-                                </mesh>
-                            </group>
-                        ))}
-                    </group>
-                );
-
-            case 'santana':
-                return (
-                    <group position={position}>
-                        {/* Base door */}
-                        <mesh position={[0, 0, 0]} material={doorMaterial}>
-                            <boxGeometry args={[width, height, baseDepth]} />
-                        </mesh>
-
-                        {/* Vertical grooves */}
-                        {[-2, -1, 0, 1, 2].map((i) => (
-                            <group key={i} position={[(i * width/5), 0, baseDepth/2]}>
-                                <mesh material={doorShadowMaterial}>
-                                    <boxGeometry args={[frameWidth/2, height - frameWidth, panelDepth]} />
-                                </mesh>
-                            </group>
-                        ))}
-                    </group>
-                );
-
-            case 'estoril':
-                return (
-                    <group position={position}>
-                        {/* Base door */}
-                        <mesh position={[0, 0, 0]} material={doorMaterial}>
-                            <boxGeometry args={[width, height, baseDepth]} />
-                        </mesh>
-
-                        {/* Outer frame */}
-                        <mesh position={[0, 0, baseDepth/2]} material={doorShadowMaterial}>
-                            <boxGeometry args={[width - frameWidth, height - frameWidth, panelDepth]} />
-                        </mesh>
-
-                        {/* Cross pattern */}
-                        <group position={[0, 0, baseDepth/2 + panelDepth]}>
-                            {/* Horizontal line */}
-                            <mesh material={doorMaterial}>
-                                <boxGeometry args={[width - frameWidth*2, frameWidth/2, panelDepth/2]} />
-                            </mesh>
-                            {/* Vertical line */}
-                            <mesh material={doorMaterial}>
-                                <boxGeometry args={[frameWidth/2, height - frameWidth*2, panelDepth/2]} />
-                            </mesh>
-                        </group>
-                    </group>
-                );
-
-            case 'mfc-slab':
-                return (
-                    <group position={position}>
-                        {/* Base door with increased depth */}
-                        <mesh position={[0, 0, 0]} material={doorMaterial}>
-                            <boxGeometry args={[width, height, baseDepth * 1.5]} />
-                        </mesh>
-                        {/* Add more prominent vertical lines for texture */}
-                        {Array.from({ length: 7 }).map((_, i) => (
-                            <mesh 
-                                key={i} 
-                                position={[(i - 3) * width/7, 0, baseDepth/2]} 
-                                material={doorShadowMaterial}
-                            >
-                                <boxGeometry args={[0.01, height, panelDepth]} />
-                            </mesh>
-                        ))}
-                        {/* Add horizontal lines for a grid pattern */}
-                        {Array.from({ length: 9 }).map((_, i) => (
-                            <mesh 
-                                key={i} 
-                                position={[0, (i - 4) * height/9, baseDepth/2]} 
-                                material={doorShadowMaterial}
-                            >
-                                <boxGeometry args={[width, 0.01, panelDepth]} />
-                            </mesh>
-                        ))}
-                    </group>
-                );
-
-            case 'cairo':
-                return (
-                    <group position={position}>
-                        {/* Base door */}
-                        <mesh position={[0, 0, 0]} material={doorMaterial}>
-                            <boxGeometry args={[width, height, baseDepth]} />
-                        </mesh>
-                        {/* Diamond pattern */}
-                        <group position={[0, 0, baseDepth/2]}>
-                            {Array.from({ length: 3 }).map((_, rowIndex) => (
-                                <group key={rowIndex} position={[0, (rowIndex - 1) * height/3, 0]}>        
-                                    {Array.from({ length: 2 }).map((_, colIndex) => (
-                                        <mesh 
-                                            key={colIndex}
-                                            position={[(colIndex - 0.5) * width/2, 0, 0]}
-                                            material={doorShadowMaterial}
-                                        >
-                                            <boxGeometry args={[width * 0.4, width * 0.4, panelDepth]} />
-                                        </mesh>
-                                    ))}
-                                </group>
-                            ))}
-                        </group>
-                    </group>
-                );
-
-            // case 'contemporary-shaker':
-            //     return (
-            //         <group position={position}>
-            //             {/* Base door */}
-            //             <mesh position={[0, 0, 0]} material={doorMaterial}>
-            //                 <boxGeometry args={[width, height, baseDepth]} />
-            //             </mesh>
-            //             {/* Modern frame pattern */}
-            //             <group position={[0, 0, baseDepth]}>
-            //                 {/* Large rectangle at the top - reduced height and adjusted position */}
-            //                 <mesh material={doorShadowMaterial} position={[0, height/8, 0]}>
-            //                     <boxGeometry args={[width * 0.85, height * 0.35, panelDepth]} />
-            //                 </mesh>
-            //                 {/* Small square at the bottom - adjusted position */}
-            //                 <mesh material={doorShadowMaterial} position={[0, -height/3, 0]}>
-            //                     <boxGeometry args={[width * 0.5, width * 0.5, panelDepth]} />
-            //                 </mesh>
-            //                 {/* Decorative border around both shapes - adjusted to match new sizes */}
-            //                 <mesh material={doorMaterial} position={[0, height/8, panelDepth]}>
-            //                     <boxGeometry args={[width * 0.9, height * 0.4, panelDepth/2]} />
-            //                 </mesh>
-            //                 <mesh material={doorMaterial} position={[0, -height/3, panelDepth]}>
-            //                     <boxGeometry args={[width * 0.55, width * 0.55, panelDepth/2]} />
-            //                 </mesh>
-            //             </group>
-            //         </group>
-            //     );
-
-            default:
-                return (
-                    <group position={position}>
-                        <mesh position={[0, 0, 0]} material={doorMaterial}>
-                            <boxGeometry args={[width, height, baseDepth]} />
-                        </mesh>
-                    </group>
-                );
-        }
-    };
-
-    const createHandle = (defaultPosition: [number, number, number]) => {
-        const [x, y, z] = defaultPosition;
-        let handleX, handleZ;
-
-        if (modelType === 3) {
-            // For double door wardrobe, use the passed positions
-            handleX = x;
-            handleZ = z;
-        } else {
-            // For single door and storage block
-            handleZ = 0.29; // Keep Z position constant
-            handleX = handlePosition === 'left' ? -0.28 : 0.4; // Move along X-axis based on position
-        }
-
-        switch (handleType) {
-            case 'none':
-                return null;
-            
-            case 'straight':
-                return (
-                    <group position={[handleX, y, handleZ]}>
-                        <mesh material={currentHandleMaterial} position={[0, 0, 0]}>
-                            <boxGeometry args={[0.08, 0.4, 0.08]} />
-                        </mesh>
-                    </group>
-                );
-            
-            case 'fancy':
-                return (
-                    <group position={[handleX, y, handleZ]}>
-                        <mesh material={currentHandleMaterial} position={[-0.1, 0, 0]}>
-                            <boxGeometry args={[0.08, 0.4, 0.08]} />
-                        </mesh>
-                        <mesh position={[-0.1, 0.2, 0]} material={currentHandleMaterial}>
-                            <boxGeometry args={[0.15, 0.04, 0.15]} />
-                        </mesh>
-                        <mesh position={[-0.1, -0.2, 0]} material={currentHandleMaterial}>
-                            <boxGeometry args={[0.15, 0.04, 0.15]} />
-                        </mesh>
-                        <mesh position={[-0.1, 0, 0.04]} material={currentHandleMaterial}>
-                            <sphereGeometry args={[0.06, 16, 16]} />
-                        </mesh>
-                    </group>
-                );
-            
-            case 'spherical':
-                return (
-                    <group position={[handleX, y, handleZ]}>
-                        {/* Connecting rod */}
-                        <mesh material={currentHandleMaterial} position={[-0.1, 0, 0]}>
-                            <boxGeometry args={[0.08, 0.08, 0.08]} />
-                        </mesh>
-                        {/* Single sphere */}
-                        <mesh position={[-0.14, 0, 0]} material={currentHandleMaterial}>
-                            <sphereGeometry args={[0.1, 32, 32]} />
-                        </mesh>
-                    </group>
-                );
-            
-            default:
-                return null;
-        }
-    };
-
-    // Add lighting helper function
-    const addLighting = () => (
-        <>
-            <ambientLight intensity={0.7} />
-            <directionalLight 
-                position={[5, 5, 5]} 
-                intensity={0.9} 
-                castShadow 
-            />
-            <pointLight 
-                position={[-3, 0, 3]} 
-                intensity={0.6} 
-            />
-        </>
-    );
-
-    // Add getRotation helper function
-    const getRotation = (wallPosition: 'leftWall' | 'rightWall' | 'backWall'): [number, number, number] => {
-        switch (wallPosition) {
-            case 'leftWall':
-                return [0, Math.PI, 0];    // 180 degrees around Y axis
-            case 'rightWall':
-                return [0, Math.PI, 0];          // 180 degrees around Y axis
-            case 'backWall':
-                return [0, -Math.PI, 0]; // -180 degrees around Y axis
-            default:
-                return [0, 0, 0];
-        }
-    };
-
-    const getInternalStoragePosition = (): [number, number, number] => {
-        switch (wallPosition) {
-            case 'rightWall':
-                return [0, -0.2, 0]; // Lower Y position for right wall
-            case 'backWall':
-                return [0, 0, 0];  // Higher Y position for back wall
-            case 'leftWall':
-                return [0, 0, 0];    // Normal Y position for left wall
-            default:
-                return [-0.45, 0, 0];
-        }
-    };
-
-    // Use internalStorageMaterial instead of internalMaterial in renderInternalStorage
-    const renderInternalStorage = () => {
-        if (cabinetOption !== 'cabinet-layout') return null;
-
-        const startPosition = getInternalStoragePosition();
-
-        switch (internalStorage) {
-            case 'long-hanging':
-                return (
-                    <group position={startPosition}>
-                        <mesh 
-                            material={internalStorageMaterial} 
-                            position={[0, 0.8, 0]}
-                            rotation={[0, 0, Math.PI/2]}
-                        >
-                            <cylinderGeometry args={[0.02, 0.02, 0.9, 8]} />
-                        </mesh>
-                    </group>
-                );
-
-            case 'double-hanging-rail':
-                return (
-                    <group position={startPosition}>
-                        <mesh 
-                            material={internalStorageMaterial} 
-                            position={[0, 1.0, 0]}
-                            rotation={[0, 0, Math.PI/2]}
-                        >
-                            <cylinderGeometry args={[0.02, 0.02, 0.9, 8]} />
-                        </mesh>
-                        <mesh 
-                            material={internalStorageMaterial} 
-                            position={[0, 0.2, 0]}
-                            rotation={[0, 0, Math.PI/2]}
-                        >
-                            <cylinderGeometry args={[0.02, 0.02, 0.9, 8]} />
-                        </mesh>
-                    </group>
-                );
-
-            case 'hanging-rail-double-shelf':
-                return (
-                    <group position={startPosition}>
-                        <mesh 
-                            material={internalStorageMaterial} 
-                            position={[0, 1.0, 0]}
-                            rotation={[0, 0, Math.PI/2]}
-                        >
-                            <cylinderGeometry args={[0.02, 0.02, 0.9, 8]} />
-                        </mesh>
-                        <mesh material={internalStorageMaterial} position={[0, 0.2, 0]}>
-                            <boxGeometry args={[0.9, 0.02, 0.5]} />
-                        </mesh>
-                        <mesh material={internalStorageMaterial} position={[0, -0.6, 0]}>
-                            <boxGeometry args={[0.9, 0.02, 0.5]} />
-                        </mesh>
-                    </group>
-                );
-
-            case 'six-shelves':
-                return (
-                    <group position={startPosition}>
-                        {[...Array(6)].map((_, i) => (
-                            <mesh 
-                                key={i}
-                                material={internalStorageMaterial} 
-                                position={[0, 1.0 - (i * 0.35), 0]}
-                            >
-                                <boxGeometry args={[0.9, 0.35, 0.5]} />
-                            </mesh>
-                        ))}
-                    </group>
-                );
-
-            case 'rail-shelf-1-drawer':
-                return (
-                    <group position={startPosition}>
-                        {/* Hanging rail */}
-                        <mesh 
-                            material={internalStorageMaterial} // Changed from internalMaterial
-                            position={[0, 1.0, 0]}
-                            rotation={[0, 0, Math.PI/2]}
-                        >
-                            <cylinderGeometry args={[0.02, 0.02, 0.9, 8]} />
-                        </mesh>
-                        {/* Shelf */}
-                        <mesh material={internalStorageMaterial} position={[0, 0.2, 0]}>
-                            <boxGeometry args={[0.9, 0.02, 0.5]} />
-                        </mesh>
-                        {/* Single drawer */}
-                        <mesh 
-                            material={internalStorageMaterial}
-                            position={[0, -0.96, 0]} // Keep original position
-                        >
-                            <boxGeometry args={[0.9, 0.35, 0.5]} />
-                        </mesh>
-                    </group>
-                );
-
-            case 'rail-shelf-2-drawer':
-                return (
-                    <group position={startPosition}>
-                        {/* Hanging rail */}
-                        <mesh 
-                            material={internalStorageMaterial}
-                            position={[0, 1.0, 0]}
-                            rotation={[0, 0, Math.PI/2]}
-                        >
-                            <cylinderGeometry args={[0.02, 0.02, 0.9, 8]} />
-                        </mesh>
-                        {/* Shelf */}
-                        <mesh material={internalStorageMaterial} position={[0, 0.2, 0]}>
-                            <boxGeometry args={[0.9, 0.02, 0.5]} />
-                        </mesh>
-                        {/* Two drawers with small gaps */}
-                        {[0, 1].map(i => (
-                            <mesh 
-                                key={i}
-                                material={internalStorageMaterial}
-                                position={[0, -0.6 - (i * 0.36), 0]}
-                            >
-                                <boxGeometry args={[0.9, 0.35, 0.5]} />
-                            </mesh>
-                        ))}
-                    </group>
-                );
-
-            case 'rail-shelf-3-drawer':
-                return (
-                    <group position={startPosition}>
-                        {/* Hanging rail */}
-                        <mesh 
-                            material={internalStorageMaterial}
-                            position={[0, 1.0, 0]}
-                            rotation={[0, 0, Math.PI/2]}
-                        >
-                            <cylinderGeometry args={[0.02, 0.02, 0.9, 8]} />
-                        </mesh>
-                        {/* Shelf */}
-                        <mesh material={internalStorageMaterial} position={[0, 0.2, 0]}>
-                            <boxGeometry args={[0.9, 0.02, 0.5]} />
-                        </mesh>
-                        {/* Three drawers with small gaps */}
-                        {[0, 1, 2].map(i => (
-                            <mesh 
-                                key={i}
-                                material={internalStorageMaterial}
-                                position={[0, -0.4 - (i * 0.3), 0]}
-                            >
-                                <boxGeometry args={[0.9, 0.28, 0.5]} />
-                            </mesh>
-                        ))}
-                    </group>
-                );
-
-            default:
-                return null;
-        }
-    };
-
-    // Update the group rotation in renderModel for both cases
-    const getInternalStorageRotation = (): [number, number, number] => {
-        switch (wallPosition) {
-            case 'rightWall':
-                return [0, Math.PI, 0];
-            case 'backWall':
-                return [0, Math.PI, 0];
-            case 'leftWall':
-                return [0, 0, 0];
-            default:
-                return [0, 0, 0];
-        }
-    };
-
-    // Add this new function for double door wardrobe
-    const shouldHideSideDoubleDoor = (side: 'front' | 'back' | 'left' | 'right') => {
-        // If cabinet layout is not selected, don't hide any sides
+    }, []);
+    
+    // Function to check which sides should be hidden based on wall position
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const shouldHideSide = (side: 'front' | 'back' | 'left' | 'right') => {
         if (cabinetOption !== 'cabinet-layout') return false;
 
-        // Only hide sides when cabinet layout is selected
         switch (wallPosition) {
             case 'backWall':
-                return side === 'front';
+                return side === 'back'; // Hide back side for back wall
             case 'leftWall':
-                return side === 'front';
+                return side === 'left'; // Hide left side for left wall
             case 'rightWall':
-                return side === 'front';
+                return side === 'right'; // Hide right side for right wall
             default:
                 return false;
         }
     };
 
+    // Function to determine storage block position
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const getStorageBlockPosition = (): number => {
         const floorHeight = -(height / 2);
         
@@ -660,248 +270,443 @@ const WardrobeModel = ({
         const position = positions[storagePosition] || positions.middle;
         return position;
     };
+    
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const addLighting = (group: THREE.Group) => {
+        // Add directional light for shadows
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(1, 2, 3);
+        directionalLight.castShadow = true;
+        group.add(directionalLight);
+        
+        // Add ambient light for overall illumination
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        group.add(ambientLight);
+    };
 
-    const renderModel = () => {
-        const floorPosition = -(height / 2);
-
-        // Determine which side is facing the user based on wall position
-        const shouldHideSide = (side: 'front' | 'back' | 'left' | 'right') => {
-            if (cabinetOption !== 'cabinet-layout') return false;
-
-            switch (wallPosition) {
-                case 'backWall':
-                    return side === 'right'; // Hide left side when on back wall (facing user)
-                case 'leftWall':
-                    return side === 'right'; // Hide right side when on left wall
-                case 'rightWall':
-                    return side === 'right'; // Hide front when on right wall
-                default:
-                    return false;
-            }
-        };
-
-        switch (modelType) {
-            case 1: // Single Door Wardrobe
-                return (
-                    <group 
-                        rotation={getRotation(wallPosition)} 
-                        position={[0, floorPosition + 1.2, -0.3]}
-                    >
-                        <group>
-                            {/* Back panel - always show */}
-                            <mesh material={wardrobeMaterial} position={[-0.49, 0, 0]}>
-                                <boxGeometry args={[0.02, 2.35, 0.55]} />
-                            </mesh>
-
-                            {/* Left side */}
-                            {!shouldHideSide('left') && (
-                                <mesh 
-                                    material={wardrobeMaterial} 
-                                    position={[0, 0, -0.275]}
-                                >
-                                    <boxGeometry args={[1, 2.35, 0.02]} />
-                                </mesh>
-                            )}
-
-                            {/* Right side */}
-                            {!shouldHideSide('right') && (
-                                <group position={[0, 0, 0.275]} rotation={[0, 0, 0]}>
-                                    {renderDoorPanel([0, 0, 0], [1, Number(modelType) === 2 ? 0.8 : 2.35, 0.08], true)}
-                                </group>
-                            )}
-
-                            {/* Front panel */}
-                            {!shouldHideSide('front') && (
-                                <mesh 
-                                    material={wardrobeMaterial} 
-                                    position={[0.49, 0, 0]}
-                                >
-                                    <boxGeometry args={[0.02, Number(modelType) === 2 ? 0.8 : 2.35, 0.55]} />
-                                </mesh>
-                            )}
-
-                            {/* Top and Bottom - always show */}
-                            <mesh material={wardrobeMaterial} position={[0, 1.175, 0]}>
-                                <boxGeometry args={[1, 0.02, 0.55]} />
-                            </mesh>
-                            <mesh material={wardrobeMaterial} position={[0, -1.175, 0]}>
-                                <boxGeometry args={[1, 0.02, 0.55]} />
-                            </mesh>
-                        </group>
-
-                        {/* Handle - only show if cabinet layout is not selected */}
-                        {cabinetOption !== 'cabinet-layout' && handleType !== 'none' && createHandle([0.49, 0, 0])}
-                        
-                        {/* Internal storage - show if cabinet layout is selected */}
-                        {cabinetOption === 'cabinet-layout' && (
-                            <group rotation={getInternalStorageRotation()}>
-                                {renderInternalStorage()}
-                            </group>
-                        )}
-                        
-                        {/* Active outline */}
-                        {isActive && (
-                            <mesh material={outlineMaterial} scale={[1.02, 1.02, 1.02]}>
-                                <boxGeometry args={[1, 2.4, 0.75]} />
-                            </mesh>
-                        )}
-                    </group>
-                );
-
-            case 2: // Storage Block
-                const yPosition = getStorageBlockPosition();
-                
-                return (
-                    <group 
-                        rotation={getRotation(wallPosition)} 
-                        position={[0, yPosition, -0.3]}
-                    >
-                        <group>
-                            {/* Back panel - always show */}
-                            <mesh material={wardrobeMaterial} position={[-0.49, 0, 0]}>
-                                <boxGeometry args={[0.02, 0.8, 0.55]} />
-                            </mesh>
-
-                            {/* Left side */}
-                            {!shouldHideSide('left') && (
-                                <mesh material={wardrobeMaterial} position={[0, 0, -0.275]}>
-                                    <boxGeometry args={[1, 0.8, 0.02]} />
-                                </mesh>
-                            )}
-
-                            {/* Right side */}
-                            {!shouldHideSide('right') && (
-                                <group position={[0, 0, 0.275]} rotation={[0, 0, 0]}>
-                                    {renderDoorPanel([0, 0, 0], [1, 0.8, 0.08], true)}
-                                </group>
-                            )}
-
-                            {/* Front panel */}
-                            {!shouldHideSide('front') && (
-                                <mesh material={wardrobeMaterial} position={[0.49, 0, 0]}>
-                                    <boxGeometry args={[0.02, 0.8, 0.55]} />
-                                </mesh>
-                            )}
-
-                            {/* Top panel */}
-                            <mesh material={wardrobeMaterial} position={[0, 0.4, 0]}>
-                                <boxGeometry args={[1, 0.02, 0.55]} />
-                            </mesh>
-
-                            {/* Bottom panel */}
-                            <mesh material={wardrobeMaterial} position={[0, -0.4, 0]}>
-                                <boxGeometry args={[1, 0.02, 0.55]} />
-                            </mesh>
-
-                            {/* Handle - only show if cabinet layout is not selected */}
-                            {cabinetOption !== 'cabinet-layout' && handleType !== 'none' && (
-                                createHandle([0.49, 0, 0])
-                            )}
-
-                            {/* Active outline */}
-                            {isActive && (
-                                <mesh material={outlineMaterial} scale={[1.02, 1.02, 1.02]}>
-                                    <boxGeometry args={[1, 0.8, 0.7]} />
-                                </mesh>
-                            )}
-                        </group>
-                    </group>
-                );
-
-            case 3: // Double Door Wardrobe
-                return (
-                    <group 
-                        rotation={getRotation(wallPosition)}
-                        position={[0, floorPosition + 1.2, -0.3]}
-                    >
-                        <group>
-                            {/* Back Wall */}
-                            {!shouldHideSideDoubleDoor('back') && (
-                                <mesh material={wardrobeMaterial} position={[0, 0, -0.275]}>
-                                    <boxGeometry args={[2, 2.35, 0.02]} />
-                                </mesh>
-                            )}
-
-                            {/* Left Side Wall */}
-                            {!shouldHideSideDoubleDoor('left') && (
-                                <mesh material={wardrobeMaterial} position={[-1, 0, 0]}>
-                                    <boxGeometry args={[0.02, 2.35, 0.55]} />
-                                </mesh>
-                            )}
-
-                            {/* Right Side Wall */}
-                            {!shouldHideSideDoubleDoor('right') && (
-                                <mesh material={wardrobeMaterial} position={[1, 0, 0]}>
-                                    <boxGeometry args={[0.02, 2.35, 0.55]} />
-                                </mesh>
-                            )}
-
-                            {/* Front Doors */}
-                            {!shouldHideSideDoubleDoor('front') && (
-                                <>
-                                    {/* Left Door - Use renderDoorPanel with thicker depth */}
-                                    {renderDoorPanel([-0.5, 0, 0.275], [0.98, 2.35, 0.08])}
-                                    
-                                    {/* Right Door - Use renderDoorPanel with thicker depth */}
-                                    {renderDoorPanel([0.5, 0, 0.275], [0.98, 2.35, 0.08])}
-                                    
-                                    {/* Center Gap Line */}
-                                    <mesh position={[0, 0, 0.275]} material={outlineMaterial}>
-                                        <boxGeometry args={[0.04, 2.35, 0.02]} />
-                                    </mesh>
-                                </>
-                            )}
-
-                            {/* Handles - Only show if cabinet layout is not selected */}
-                            {cabinetOption !== 'cabinet-layout' && handleType !== 'none' && (
-                                <>
-                                    {createHandle([-0.2, 0, 0.3])} {/* Left Door Handle */}
-                                    {createHandle([0.3, 0, 0.3])}  {/* Right Door Handle */}
-                                </>
-                            )}
-
-                            {/* Internal Storage - Show when cabinet layout is selected */}
-                            {cabinetOption === 'cabinet-layout' && (
-                                <>
-                                    {/* Left Compartment */}
-                                    <group rotation={getInternalStorageRotation()} position={[-0.5, 0, 0]}>
-                                        {renderInternalStorage()}
-                                    </group>
-                                    {/* Right Compartment */}
-                                    <group rotation={getInternalStorageRotation()} position={[0.5, 0, 0]}>
-                                        {renderInternalStorage()}
-                                    </group>
-                                </>
-                            )}
-
-                            {/* Top Panel */}
-                            <mesh material={wardrobeMaterial} position={[0, 1.175, 0]}>
-                                <boxGeometry args={[2, 0.02, 0.55]} />
-                            </mesh>
-
-                            {/* Bottom Panel */}
-                            <mesh material={wardrobeMaterial} position={[0, -1.175, 0]}>
-                                <boxGeometry args={[2, 0.02, 0.55]} />
-                            </mesh>
-
-                            {/* Active Selection Outline */}
-                            {isActive && (
-                                <mesh material={outlineMaterial} scale={[1.02, 1.02, 1.02]}>
-                                    <boxGeometry args={[2, 2.4, 0.7]} />
-                                </mesh>
-                            )}
-                        </group>
-                    </group>
-                );
+    // Modified renderDoorPanel function to apply the texture
+    const renderDoorPanel = (position: [number, number, number], size: [number, number, number], isFrontDoor: boolean = true) => {
+        // Adjust texture repeat based on door dimensions
+        const doorWidth = size[0];
+        const doorHeight = size[1];
+        
+        // Clone the texture to avoid affecting other usages, if available
+        let adjustedTexture = null;
+        if (doorTexture) {
+            adjustedTexture = doorTexture.clone();
+            adjustedTexture.wrapS = adjustedTexture.wrapT = THREE.RepeatWrapping;
             
+            // Set appropriate scaling based on door dimensions
+            // For taller doors, we want to repeat the texture more vertically
+            adjustedTexture.repeat.set(1, doorHeight / doorWidth);
+            adjustedTexture.needsUpdate = true;
+        }
+        
+        // Get door color
+        const doorColor = getDoorColor();
+        
+        // Create door material with texture
+        return (
+            <mesh position={position} castShadow receiveShadow>
+                <boxGeometry args={size} />
+                <meshStandardMaterial 
+                    color={doorColor}
+                    roughness={0.4} // Slightly rougher to show texture better
+                    metalness={0.05} // Lower metalness for more natural look
+                    map={adjustedTexture}
+                    transparent={Boolean(adjustedTexture)}
+                    opacity={adjustedTexture ? 0.9 : 1}
+                />
+            </mesh>
+        );
+    };
+
+    // Create better looking handles
+    const createHandle = (position: [number, number, number]) => {
+        const handleMaterial = new THREE.MeshStandardMaterial({
+            color: handleColor?.color || '#C0C0C0',
+            metalness: 0.8,
+            roughness: 0.2
+        });
+
+        switch (handleType) {
+            case 'straight':
+                return (
+                    <group position={position}>
+                        {/* Handle rod */}
+                        <mesh castShadow>
+                            <boxGeometry args={[0.03, 0.2, 0.03]} />
+                            <primitive object={handleMaterial} />
+                        </mesh>
+                        {/* Handle mounts */}
+                        <mesh position={[0, 0.08, 0.02]} castShadow>
+                            <boxGeometry args={[0.02, 0.02, 0.04]} />
+                            <primitive object={handleMaterial} />
+                        </mesh>
+                        <mesh position={[0, -0.08, 0.02]} castShadow>
+                            <boxGeometry args={[0.02, 0.02, 0.04]} />
+                            <primitive object={handleMaterial} />
+                        </mesh>
+                    </group>
+                );
+            case 'fancy':
+                return (
+                    <group position={position}>
+                        {/* Handle rod - curved appearance */}
+                        <mesh castShadow rotation={[Math.PI/2, 0, 0]}>
+                            <cylinderGeometry args={[0.015, 0.015, 0.2, 16]} />
+                            <primitive object={handleMaterial} />
+                        </mesh>
+                        {/* Decorative end caps */}
+                        <mesh position={[0, 0.1, 0]} castShadow>
+                            <sphereGeometry args={[0.02, 16, 16]} />
+                            <primitive object={handleMaterial} />
+                        </mesh>
+                        <mesh position={[0, -0.1, 0]} castShadow>
+                            <sphereGeometry args={[0.02, 16, 16]} />
+                            <primitive object={handleMaterial} />
+                        </mesh>
+                        {/* Handle mounts */}
+                        <mesh position={[0, 0, 0.02]} castShadow>
+                            <boxGeometry args={[0.03, 0.03, 0.04]} />
+                            <primitive object={handleMaterial} />
+                            </mesh>
+                    </group>
+                );
+            case 'spherical':
+                return (
+                    <group position={position}>
+                        {/* Spherical knob */}
+                        <mesh castShadow>
+                            <sphereGeometry args={[0.04, 16, 16]} />
+                            <primitive object={handleMaterial} />
+                        </mesh>
+                        {/* Base plate */}
+                        <mesh position={[0, 0, -0.02]} castShadow rotation={[Math.PI/2, 0, 0]}>
+                            <cylinderGeometry args={[0.03, 0.03, 0.01, 16]} />
+                            <primitive object={handleMaterial} />
+                                        </mesh>
+                    </group>
+                );
+            case 'none':
+                return null;
+            default:
+                // Default to straight handle
+                return (
+                    <group position={position}>
+                        <mesh castShadow>
+                            <boxGeometry args={[0.03, 0.2, 0.03]} />
+                            <primitive object={handleMaterial} />
+                        </mesh>
+                    </group>
+                );
+        }
+    };
+
+    // Get proper rotation based on wall position
+    const rotation = getRotation(wallPosition);
+    
+    // Calculate scale based on room height
+    const scale = height / 2.4; // 2.4 is the default height
+
+    // Calculate proper position offset based on wall position
+    const getWardrobePosition = (): [number, number, number] => {
+        // Y position adjustment to ensure wardrobe touches the floor
+        const floorLevel = 0;
+        const wardrobeHalfHeight = 1.2; // Half of standard 2.4m wardrobe
+        const yPosition = floorLevel - wardrobeHalfHeight; // Position the bottom at floor level
+
+        switch (wallPosition) {
+            case 'leftWall':
+                return [0, yPosition, 0.3]; // Default position for left wall
+            case 'rightWall':
+                return [0, yPosition, 0.3]; // Default position for right wall
+            case 'backWall':
+                return [0, yPosition, 0.3]; // Move slightly closer to wall but maintain x at 0
+            default:
+                return [0, yPosition, 0];
+        }
+    };
+
+    // Internal storage rendering function
+    const renderInternalStorage = () => {
+        if (cabinetOption !== 'cabinet-layout') return null;
+
+        const internalStorageMaterial = createInternalStorageMaterial(internalStorageColor, internalStorageTexture);
+        const startPosition = getInternalStoragePosition(wallPosition);
+
+        switch (internalStorage) {
+            case 'long-hanging':
+                return (
+                    <group position={startPosition}>
+                        <mesh 
+                            position={[0, 0.8, 0]}
+                            rotation={[0, 0, Math.PI/2]}
+                            castShadow
+                            receiveShadow
+                        >
+                            <cylinderGeometry args={[0.02, 0.02, 0.9, 8]} />
+                            <primitive object={internalStorageMaterial} />
+                        </mesh>
+                    </group>
+                );
+
+            case 'double-hanging-rail':
+                return (
+                    <group position={startPosition}>
+                        <mesh 
+                            position={[0, 1.0, 0]}
+                            rotation={[0, 0, Math.PI/2]}
+                            castShadow
+                            receiveShadow
+                        >
+                            <cylinderGeometry args={[0.02, 0.02, 0.9, 8]} />
+                            <primitive object={internalStorageMaterial} />
+                        </mesh>
+                        <mesh 
+                            position={[0, 0.2, 0]}
+                            rotation={[0, 0, Math.PI/2]}
+                            castShadow
+                            receiveShadow
+                        >
+                            <cylinderGeometry args={[0.02, 0.02, 0.9, 8]} />
+                            <primitive object={internalStorageMaterial} />
+                        </mesh>
+                    </group>
+                );
+
+            case 'hanging-rail-double-shelf':
+                return (
+                    <group position={startPosition}>
+                        <mesh 
+                            position={[0, 1.0, 0]}
+                            rotation={[0, 0, Math.PI/2]}
+                            castShadow
+                            receiveShadow
+                        >
+                            <cylinderGeometry args={[0.02, 0.02, 0.9, 8]} />
+                            <primitive object={internalStorageMaterial} />
+                        </mesh>
+                        <mesh position={[0, 0.2, 0]} castShadow receiveShadow>
+                            <boxGeometry args={[0.9, 0.02, 0.5]} />
+                            <primitive object={internalStorageMaterial} />
+                        </mesh>
+                        <mesh position={[0, -0.6, 0]} castShadow receiveShadow>
+                            <boxGeometry args={[0.9, 0.02, 0.5]} />
+                            <primitive object={internalStorageMaterial} />
+                        </mesh>
+                    </group>
+                );
+
+            case 'six-shelves':
+                return (
+                    <group position={startPosition}>
+                        {[...Array(6)].map((_, i) => (
+                            <mesh 
+                                key={i}
+                                position={[0, 1.0 - (i * 0.35), 0]}
+                                castShadow
+                                receiveShadow
+                            >
+                                <boxGeometry args={[0.9, 0.35, 0.5]} />
+                                <primitive object={internalStorageMaterial} />
+                            </mesh>
+                        ))}
+                    </group>
+                );
+
             default:
                 return null;
         }
     };
 
+    const renderModel = () => {
+        // Base cabinet color - updated to a warmer, more natural wood color
+        const cabinetColor = color?.color || '#5D4037'; // Warmer brown color
+        const basePosition = getWardrobePosition();
+        
+        // Higher outline intensity for active wardrobe
+        const wardrobeOutlineMaterial = isActive ? 
+            new THREE.MeshStandardMaterial({
+                color: "#e74c3c",
+                emissive: "#e74c3c",
+                emissiveIntensity: 0.3,
+                roughness: 0.7
+            }) : 
+            new THREE.MeshStandardMaterial({
+                color: cabinetColor,
+                roughness: 0.7
+            });
+
+        switch (modelType) {
+            case 1: // Single Door
+                return (
+                    <group position={basePosition}>
+                        {/* Base structure */}
+                        <mesh position={[0, 0, 0]} receiveShadow>
+                            <boxGeometry args={[1, 0.02, 0.6]} />
+                            <meshStandardMaterial color={cabinetColor} />
+                            </mesh>
+
+                        {/* Top */}
+                        <mesh position={[0, 2.38, 0]} receiveShadow>
+                            <boxGeometry args={[1, 0.02, 0.6]} />
+                            <meshStandardMaterial color={cabinetColor} />
+                                </mesh>
+                        
+                        {/* Back */}
+                        <mesh position={[0, 1.2, -0.3]} receiveShadow>
+                            <boxGeometry args={[1, 2.4, 0.02]} />
+                            <meshStandardMaterial color={cabinetColor} />
+                                </mesh>
+                        
+                        {/* Sides - using active outline material for the sides when active */}
+                        <mesh position={[-0.49, 1.2, 0]} receiveShadow>
+                            <boxGeometry args={[0.02, 2.4, 0.6]} />
+                            <primitive object={isActive ? wardrobeOutlineMaterial : new THREE.MeshStandardMaterial({ color: cabinetColor })} />
+                            </mesh>
+                        <mesh position={[0.49, 1.2, 0]} receiveShadow>
+                            <boxGeometry args={[0.02, 2.4, 0.6]} />
+                            <primitive object={isActive ? wardrobeOutlineMaterial : new THREE.MeshStandardMaterial({ color: cabinetColor })} />
+                            </mesh>
+                        
+                        {/* Door */}
+                        {renderDoorPanel([0, 1.2, 0.31], [0.96, 2.37, 0.02])}
+                        
+                        {/* Handle */}
+                        {handleType !== 'none' && (
+                            createHandle(handlePosition === 'right' ? [0.4, 1.2, 0.33] : [-0.4, 1.2, 0.33])
+                        )}
+                        
+                        {/* Internal Storage if cabinet option is selected */}
+                        {cabinetOption === 'cabinet-layout' && (
+                            <group rotation={rotation}>
+                                {renderInternalStorage()}
+                            </group>
+                        )}
+                    </group>
+                );
+
+            case 2: // Storage Block
+                return (
+                    <group position={basePosition}>
+                        {/* Base structure */}
+                        <mesh position={[0, 0, 0]} receiveShadow>
+                            <boxGeometry args={[1, 0.02, 0.6]} />
+                            <meshStandardMaterial color={cabinetColor} />
+                            </mesh>
+
+                        {/* Top */}
+                        <mesh position={[0, 2.38, 0]} receiveShadow>
+                            <boxGeometry args={[1, 0.02, 0.6]} />
+                            <meshStandardMaterial color={cabinetColor} />
+                                </mesh>
+                        
+                        {/* Back */}
+                        <mesh position={[0, 1.2, -0.3]} receiveShadow>
+                            <boxGeometry args={[1, 2.4, 0.02]} />
+                            <meshStandardMaterial color={cabinetColor} />
+                            </mesh>
+
+                        {/* Sides */}
+                        <mesh position={[-0.49, 1.2, 0]} receiveShadow>
+                            <boxGeometry args={[0.02, 2.4, 0.6]} />
+                            <meshStandardMaterial color={cabinetColor} />
+                        </mesh>
+                        <mesh position={[0.49, 1.2, 0]} receiveShadow>
+                            <boxGeometry args={[0.02, 2.4, 0.6]} />
+                            <meshStandardMaterial color={cabinetColor} />
+                            </mesh>
+
+                        {/* Storage shelves */}
+                        <mesh position={[0, 0.4, 0]} receiveShadow>
+                            <boxGeometry args={[0.95, 0.03, 0.55]} />
+                            <meshStandardMaterial color={internalStorageColor?.color || '#ffffff'} />
+                        </mesh>
+                        <mesh position={[0, 1.0, 0]} receiveShadow>
+                            <boxGeometry args={[0.95, 0.03, 0.55]} />
+                            <meshStandardMaterial color={internalStorageColor?.color || '#ffffff'} />
+                        </mesh>
+                        <mesh position={[0, 1.6, 0]} receiveShadow>
+                            <boxGeometry args={[0.95, 0.03, 0.55]} />
+                            <meshStandardMaterial color={internalStorageColor?.color || '#ffffff'} />
+                        </mesh>
+                        <mesh position={[0, 2.2, 0]} receiveShadow>
+                            <boxGeometry args={[0.95, 0.03, 0.55]} />
+                            <meshStandardMaterial color={internalStorageColor?.color || '#ffffff'} />
+                                </mesh>
+                    </group>
+                );
+
+            case 3: // Double Door Wardrobe
+            default:
+                return (
+                    <group position={basePosition}>
+                        {/* Base structure */}
+                        <mesh position={[0, 0, 0]} receiveShadow>
+                            <boxGeometry args={[1, 0.02, 0.6]} />
+                            <meshStandardMaterial color={cabinetColor} />
+                        </mesh>
+                        
+                        {/* Top */}
+                        <mesh position={[0, 2.38, 0]} receiveShadow>
+                            <boxGeometry args={[1, 0.02, 0.6]} />
+                            <meshStandardMaterial color={cabinetColor} />
+                                </mesh>
+                        
+                        {/* Back */}
+                        <mesh position={[0, 1.2, -0.3]} receiveShadow>
+                            <boxGeometry args={[1, 2.4, 0.02]} />
+                            <meshStandardMaterial color={cabinetColor} />
+                                </mesh>
+                        
+                        {/* Sides */}
+                        <mesh position={[-0.49, 1.2, 0]} receiveShadow>
+                            <boxGeometry args={[0.02, 2.4, 0.6]} />
+                            <meshStandardMaterial color={cabinetColor} />
+                        </mesh>
+                        <mesh position={[0.49, 1.2, 0]} receiveShadow>
+                            <boxGeometry args={[0.02, 2.4, 0.6]} />
+                            <meshStandardMaterial color={cabinetColor} />
+                                </mesh>
+                        
+                        {/* Center divider */}
+                        <mesh position={[0, 1.2, 0]} receiveShadow>
+                            <boxGeometry args={[0.02, 2.4, 0.58]} />
+                            <meshStandardMaterial color={cabinetColor} />
+                        </mesh>
+                        
+                        {/* Left door */}
+                        {renderDoorPanel([-0.24, 1.2, 0.31], [0.47, 2.37, 0.02])}
+                        
+                        {/* Right door */}
+                        {renderDoorPanel([0.24, 1.2, 0.31], [0.47, 2.37, 0.02])}
+                        
+                        {/* Handles */}
+                        {handleType !== 'none' && (
+                            <>
+                                {/* Left door handle */}
+                                {createHandle([-0.15, 1.2, 0.33])}
+                                
+                                {/* Right door handle */}
+                                {createHandle([0.15, 1.2, 0.33])}
+                                </>
+                            )}
+
+                        {/* Internal Storage if cabinet option is selected */}
+                            {cabinetOption === 'cabinet-layout' && (
+                            <group rotation={rotation}>
+                                        {renderInternalStorage()}
+                                    </group>
+                        )}
+                    </group>
+                );
+        }
+    };
+
+    // Return the model with proper rotation and scaling
     return (
-        <group>
-            {addLighting()}
+        <group rotation={rotation} scale={[1, scale, 1]} position={[0, height/2, 0]}>
             {renderModel()}
         </group>
     );

@@ -1,0 +1,190 @@
+/* Doors.css */
+.doors-container {
+  max-height: 60vh;
+  scrollbar-width: thin;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 15px;
+  margin-top: 25px;
+}
+
+.section-title:first-child {
+  margin-top: 0;
+}
+
+/* Wardrobe Options Section */
+.wardrobe-section {
+  margin-bottom: 24px;
+}
+
+.wardrobe-options {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.wardrobe-option {
+  background-color: #f5f5f5;
+  padding: 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  min-width: 100px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.wardrobe-option img {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 8px;
+}
+
+.wardrobe-option.selected {
+  background-color: #e38c6e;
+  color: white;
+}
+
+/* Door Style Options */
+.door-style-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.door-style-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f5f5;
+  padding: 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  min-width: 100px;
+  width: calc(50% - 15px);
+}
+
+.door-style-option img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  margin-bottom: 8px;
+  border-radius: 4px;
+}
+
+.door-style-option.selected {
+  background-color: #e38c6e;
+  color: white;
+}
+
+.door-style-option.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Handle Style Options */
+.handle-style-options {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.handle-style-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #f5f5f5;
+  padding: 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  min-width: 60px;
+  width: calc(25% - 15px);
+}
+
+.handle-style-option .handle-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.handle-style-option.selected {
+  background-color: #e38c6e;
+  color: white;
+}
+
+.handle-style-option.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Handle Position Options */
+.handle-position-options {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.handle-position-option {
+  background-color: #f5f5f5;
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+  transition: all 0.2s;
+  min-width: 120px;
+  flex: 1;
+  position: relative;
+}
+
+.handle-position-option.enabled {
+  cursor: pointer;
+}
+
+.handle-position-option.selected {
+  background-color: #e38c6e;
+  color: white;
+}
+
+.select-wardrobe-message {
+  font-size: 0.8rem;
+  color: #888;
+  margin-top: 5px;
+}
+
+@media (max-width: 768px) {
+  .doors-container {
+    padding: 15px;
+    max-height: 50vh;
+  }
+  
+  .door-style-option, .handle-style-option {
+    width: calc(50% - 10px);
+  }
+}
+
+@media (max-width: 480px) {
+  .wardrobe-options {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .handle-style-options,
+  .door-style-options {
+    grid-template-columns: repeat(1, 1fr);
+  }
+} 

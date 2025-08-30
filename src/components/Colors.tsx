@@ -1,95 +1,123 @@
-import React from 'react';
-import { ColorOption } from '../types';
+import React from "react";
+import { ColorOption } from "../types";
+import "./Colors.css";
 
 interface ColorsProps {
     onSelectWardrobeColor: (option: ColorOption) => void;
     onSelectHandleColor: (option: ColorOption) => void;
-    onSelectInternalStorageColor: (option: ColorOption) => void; // Add this
+    onSelectInternalStorageColor: (option: ColorOption) => void;
     selectedWardrobeColor: ColorOption;
     selectedHandleColor: ColorOption;
-    selectedInternalStorageColor: ColorOption; // Add this
+    selectedInternalStorageColor: ColorOption;
     hasActiveWardrobe: boolean;
 }
 
 const Colors = ({ 
     onSelectWardrobeColor, 
     onSelectHandleColor, 
-    onSelectInternalStorageColor, // Add this
+    onSelectInternalStorageColor,
     selectedWardrobeColor,
     selectedHandleColor,
-    selectedInternalStorageColor, // Add this
+    selectedInternalStorageColor,
     hasActiveWardrobe 
 }: ColorsProps) => {
-    const wardrobeColors: ColorOption[] = [
-        { id: 'chrome', name: 'Chrome', color: '#E8E8E8', isMetallic: true },
-        { id: 'brass', name: 'Brass', color: '#B5A642', isMetallic: true },
-        { id: 'black-metal', name: 'Black Metal', color: '#222222', isMetallic: true },
-        { id: 'rose-gold', name: 'Rose Gold', color: '#B76E79', isMetallic: true },
-        { id: 'brushed-nickel', name: 'Brushed Nickel', color: '#848789', isMetallic: true },
-        { id: 'metallic-silver', name: 'Metallic Silver', color: '#C0C0C0', isMetallic: true },
-        { id: 'metallic-gold', name: 'Metallic Gold', color: '#FFD700', isMetallic: true },
-        { id: 'brushed-steel', name: 'Brushed Steel', color: '#B4B4B4', isMetallic: true },
-        { id: 'copper', name: 'Copper', color: '#B87333', isMetallic: true },
-        { id: 'bronze', name: 'Bronze', color: '#CD7F32', isMetallic: true },
-        { id: 'gunmetal', name: 'Gunmetal', color: '#2C3539', isMetallic: true },
-        { id: 'wood', name: 'Wood', texture: '/textures/wood.jpg' },
-        { id: 'DirtWindowStains', name: 'Dirt Window Stains', texture: '/textures/DirtWindowStains.jpg' },
-        { id: 'FloorPoured', name: 'Floor Poured', texture: '/textures/FloorPoured.jpg' },
-        { id: 'GoldPaint', name: 'Gold Paint', texture: '/textures/GoldPaint.jpg' },
-        { id: 'Metal', name: 'Metal', texture: '/textures/metal.jpg' },
-        { id: 'Poliigon_MetalBronze', name: 'Poliigon Metal Bronze', texture: '/textures/Poliigon_MetalBronze.jpg' },
-        { id: 'Poliigon_MetalRust', name: 'Poliigon Metal Rust', texture: '/textures/Poliigon_MetalRust.jpg' },
-        { id: 'RammedEarth', name: 'Rammed Earth', texture: '/textures/RammedEarth.png' },
-        { id: 'ScratchesLight', name: 'Scratches Light', texture: '/textures/ScratchesLight.jpg' },
-        { id: 'SmudgesLarge', name: 'Smudges Large', texture: '/textures/SmudgesLarge.jpg' },
-        { id: 'StuccoRough', name: 'Stucco Rough', texture: '/textures/StuccoRough.png' },
-        { id: 'TilesZellige', name: 'Tiles Zellige', texture: '/textures/TilesZellige.jpg' }
+    const wardrobeColors = [
+        {
+            id: 'white',
+            name: 'White',
+            color: '#ffffff',
+        },
+        {
+            id: 'black',
+            name: 'Black',
+            color: '#121212',
+        },
+        {
+            id: 'sage-green',
+            name: 'Sage Green',
+            color: '#7d9b76',
+        },
+        {
+            id: 'forest-green',
+            name: 'Forest Green',
+            color: '#2f4d3a',
+        },
+        {
+            id: 'light-grey',
+            name: 'Light Grey',
+            color: '#d0d0d0',
+        },
+        {
+            id: 'dark-grey',
+            name: 'Dark Grey',
+            color: '#505050',
+        },
+        {
+            id: 'light-oak',
+            name: 'Light Oak',
+            color: '#deb887',
+            texture: 'https://i.imgur.com/jmYBygK.jpg'
+        },
+        {
+            id: 'oak',
+            name: 'Oak',
+            color: '#b8860b',
+            texture: 'https://i.imgur.com/aYXbSJ5.jpg'
+        },
+        {
+            id: 'walnut',
+            name: 'Walnut',
+            color: '#654321',
+            texture: 'https://i.imgur.com/TFGBR42.jpg'
+        },
+        {
+            id: 'rose-gold',
+            name: 'Rose Gold',
+            color: '#B76E79',
+            isMetallic: true
+        }
     ];
 
-    const handleColors: ColorOption[] = [
-        { id: 'chrome', name: 'Chrome', color: '#E8E8E8', isMetallic: true },
-        { id: 'brass', name: 'Brass', color: '#B5A642', isMetallic: true },
-        { id: 'black-metal', name: 'Black Metal', color: '#222222', isMetallic: true },
-        { id: 'rose-gold', name: 'Rose Gold', color: '#B76E79', isMetallic: true },
-        { id: 'brushed-nickel', name: 'Brushed Nickel', color: '#848789', isMetallic: true },
-        { id: 'wood', name: 'Wood', texture: '/textures/wood.jpg' },
-        { id: 'DirtWindowStains', name: 'Dirt Window Stains', texture: '/textures/DirtWindowStains.jpg' },
-        { id: 'FloorPoured', name: 'Floor Poured', texture: '/textures/FloorPoured.jpg' },
-        { id: 'GoldPaint', name: 'Gold Paint', texture: '/textures/GoldPaint.jpg' },
-        { id: 'Metal', name: 'Metal', texture: '/textures/metal.jpg' },
-        { id: 'Poliigon_MetalBronze', name: 'Poliigon Metal Bronze', texture: '/textures/Poliigon_MetalBronze.jpg' },
-        { id: 'Poliigon_MetalRust', name: 'Poliigon Metal Rust', texture: '/textures/Poliigon_MetalRust.jpg' },
-        { id: 'RammedEarth', name: 'Rammed Earth', texture: '/textures/RammedEarth.png' },
-        { id: 'ScratchesLight', name: 'Scratches Light', texture: '/textures/ScratchesLight.jpg' },
-        { id: 'SmudgesLarge', name: 'Smudges Large', texture: '/textures/SmudgesLarge.jpg' },
-        { id: 'StuccoRough', name: 'Stucco Rough', texture: '/textures/StuccoRough.png' },
-        { id: 'TilesZellige', name: 'Tiles Zellige', texture: '/textures/TilesZellige.jpg' }
-    ];
-
-    const internalStorageColors: ColorOption[] = [
-        { id: 'chrome', name: 'Chrome', color: '#E8E8E8', isMetallic: true },
-        { id: 'brass', name: 'Brass', color: '#B5A642', isMetallic: true },
-        { id: 'black-metal', name: 'Black Metal', color: '#222222', isMetallic: true },
-        { id: 'rose-gold', name: 'Rose Gold', color: '#B76E79', isMetallic: true },
-        { id: 'brushed-nickel', name: 'Brushed Nickel', color: '#848789', isMetallic: true },
-        { id: 'wood', name: 'Wood', texture: '/textures/wood.jpg' },
-        { id: 'DirtWindowStains', name: 'Dirt Window Stains', texture: '/textures/DirtWindowStains.jpg' },
-        { id: 'FloorPoured', name: 'Floor Poured', texture: '/textures/FloorPoured.jpg' },
-        { id: 'GoldPaint', name: 'Gold Paint', texture: '/textures/GoldPaint.jpg' },
-        { id: 'Metal', name: 'Metal', texture: '/textures/metal.jpg' },
-        { id: 'Poliigon_MetalBronze', name: 'Poliigon Metal Bronze', texture: '/textures/Poliigon_MetalBronze.jpg' },
-        { id: 'Poliigon_MetalRust', name: 'Poliigon Metal Rust', texture: '/textures/Poliigon_MetalRust.jpg' },
-        { id: 'RammedEarth', name: 'Rammed Earth', texture: '/textures/RammedEarth.png' },
-        { id: 'ScratchesLight', name: 'Scratches Light', texture: '/textures/ScratchesLight.jpg' },
-        { id: 'SmudgesLarge', name: 'Smudges Large', texture: '/textures/SmudgesLarge.jpg' },
-        { id: 'StuccoRough', name: 'Stucco Rough', texture: '/textures/StuccoRough.png' },
-        { id: 'TilesZellige', name: 'Tiles Zellige', texture: '/textures/TilesZellige.jpg' }
+    const handleColors = [
+        {
+            id: 'chrome',
+            name: 'Chrome',
+            color: '#C0C0C0',
+            isMetallic: true
+        },
+        {
+            id: 'gold',
+            name: 'Gold',
+            color: '#FFD700',
+            isMetallic: true
+        },
+        {
+            id: 'bronze',
+            name: 'Bronze',
+            color: '#CD7F32',
+            isMetallic: true
+        },
+        {
+            id: 'black',
+            name: 'Black',
+            color: '#121212',
+        },
+        {
+            id: 'forest-green',
+            name: 'Forest Green',
+            color: '#2f4d3a',
+        },
+        {
+            id: 'white',
+            name: 'White',
+            color: '#ffffff',
+        }
     ];
 
     return (
-        <div className="color-options">
-            <div className="section">
-                <h3 className="section-title">Color your Wardrobe</h3>
+        <div className="colors-container">
+            <div className="color-section">
+                <h3 className="section-title">Wardrobe Color</h3>
                 <div className="color-grid">
                     {wardrobeColors.map((option) => (
                         <div
@@ -98,20 +126,26 @@ const Colors = ({
                                 selectedWardrobeColor.id === option.id ? 'selected' : ''
                             } ${hasActiveWardrobe ? 'enabled' : ''}`}
                             onClick={() => hasActiveWardrobe && onSelectWardrobeColor(option)}
-                            style={{
-                                background: option.texture 
-                                    ? `url(${option.texture}) center/cover`
-                                    : option.color
-                            }}
                         >
+                            {option.texture ? (
+                                <div 
+                                    className="texture-swatch" 
+                                    style={{backgroundImage: `url(${option.texture})`}}
+                                ></div>
+                            ) : (
+                                <div 
+                                    className={`color-swatch ${option.isMetallic ? 'metallic-color' : ''}`} 
+                                    style={{backgroundColor: option.color}}
+                                ></div>
+                            )}
                             <span className="color-name">{option.name}</span>
                         </div>
                     ))}
                 </div>
             </div>
 
-            <div className="section">
-                <h3 className="section-title">Color your Handle</h3>
+            <div className="color-section">
+                <h3 className="section-title">Handle Color</h3>
                 <div className="color-grid">
                     {handleColors.map((option) => (
                         <div
@@ -120,34 +154,11 @@ const Colors = ({
                                 selectedHandleColor.id === option.id ? 'selected' : ''
                             } ${hasActiveWardrobe ? 'enabled' : ''}`}
                             onClick={() => hasActiveWardrobe && onSelectHandleColor(option)}
-                            style={{
-                                background: option.texture 
-                                    ? `url(${option.texture}) center/cover`
-                                    : option.color
-                            }}
                         >
-                            <span className="color-name">{option.name}</span>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            <div className="section">
-                <h3 className="section-title">Color your Internal Storage</h3>
-                <div className="color-grid">
-                    {internalStorageColors.map((option) => (
-                        <div
-                            key={option.id}
-                            className={`color-tile ${
-                                selectedInternalStorageColor.id === option.id ? 'selected' : ''
-                            } ${hasActiveWardrobe ? 'enabled' : ''}`}
-                            onClick={() => hasActiveWardrobe && onSelectInternalStorageColor(option)}
-                            style={{
-                                background: option.texture 
-                                    ? `url(${option.texture}) center/cover`
-                                    : option.color
-                            }}
-                        >
+                            <div 
+                                className={`color-swatch ${option.isMetallic ? 'metallic-color' : ''}`} 
+                                style={{backgroundColor: option.color}}
+                            ></div>
                             <span className="color-name">{option.name}</span>
                         </div>
                     ))}
