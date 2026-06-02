@@ -2,10 +2,10 @@
 
 // Door style image fallbacks
 export const doorImages = {
-  panelShaker: "https://via.placeholder.com/100x100?text=Panel+Shaker",
-  panelEclipse: "https://via.placeholder.com/100x100?text=Panel+Eclipse",
-  estoril: "https://via.placeholder.com/100x100?text=Estoril",
-  santana: "https://via.placeholder.com/100x100?text=Santana"
+  panelShaker: "https://img.freepik.com/free-photo/wooden-texture_1422-300.jpg",
+  panelEclipse: "https://img.freepik.com/free-photo/wooden-parquet-texture-background_1339-5269.jpg",
+  estoril: "https://img.freepik.com/free-photo/dark-wooden-texture_24837-382.jpg",
+  santana: "https://img.freepik.com/free-photo/wood-painted-white-texture-background_53876-167459.jpg"
 };
 
 // Handle style image fallbacks

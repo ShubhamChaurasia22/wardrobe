@@ -91,17 +91,17 @@ const Doors = ({
         { 
             id: 1,
             name: "Single Door", 
-            image: "https://img.icons8.com/material-outlined/96/000000/cupboard.png"
+            image: (process.env.PUBLIC_URL || '') + "/assets/open-door-100.png"
         },
         { 
             id: 2,
             name: "Storage Block", 
-            image: "https://img.icons8.com/material-outlined/96/000000/drawer.png",
+            image: (process.env.PUBLIC_URL || '') + "/assets/cardboard-box-100.png"
         },
         { 
             id: 3,
             name: "Double Door", 
-            image: "https://img.icons8.com/material-outlined/96/000000/empty-wardrobe.png"
+            image: (process.env.PUBLIC_URL || '') + "/assets/double-door-open-100.png"
         }
     ];
 

@@ -6,22 +6,40 @@ export interface ColorOption {
     isMetallic?: boolean;
 }
 
-export type InternalStorageType = 
-    'long-hanging' | 
-    'double-hanging-rail' | 
-    'hanging-rail-double-shelf' | 
-    'six-shelves' | 
-    'rail-shelf-1-drawer' | 
-    'rail-shelf-2-drawer' | 
-    'rail-shelf-3-drawer';
+export type InternalStorageType =
+    | 'full-hanging'
+    | 'long-hanging'
+    | 'double-hanging-rail'
+    | 'hanging-rail-double-shelf'
+    | 'six-shelves'
+    | 'rail-shelf-1-drawer'
+    | 'rail-shelf-2-drawer'
+    | 'rail-shelf-3-drawer'
+    | 'drawers-shelves'
+    | 'drawers-hanging';
 
 export type StoragePosition = 'top' | 'bottom' | 'middle';
 
-export type DoorStyle = 'panel-shaker' | 'panel-eclipse' | 'estoril' | 'santana';
+// cairo = 3-panel routed (ToMeasure signature)
+// shaker = single recessed panel
+// slab = completely flat
+// contemporary = thin horizontal routing lines
+// panel-eclipse / estoril / santana = legacy styles kept for compatibility
+export type DoorStyle =
+    | 'cairo'
+    | 'shaker'
+    | 'slab'
+    | 'contemporary'
+    | 'panel-shaker'
+    | 'panel-eclipse'
+    | 'estoril'
+    | 'santana';
+
+export type HandleStyle = 'block' | 'bar' | 'knob' | 'none' | 'straight' | 'fancy' | 'spherical';
 
 export type WallSection = {
     width: number;
-    type: "free-space" | "button" | "wardrobe" | "occupied";
+    type: 'free-space' | 'button' | 'wardrobe' | 'occupied';
     occupiedBy?: {
         wall: string;
         index: number;
@@ -48,4 +66,17 @@ export interface LayoutConfig {
     leftWall: WallSection[];
     rightWall: WallSection[];
     backWall: WallSection[];
+}
+
+// ToMeasure configurator state
+export interface TMConfig {
+    doorStyle: DoorStyle;
+    exteriorColor: ColorOption;
+    interiorColor: ColorOption;
+    handleStyle: HandleStyle;
+    handleColor: ColorOption;
+    internalLayout: InternalStorageType;
+    widthMm: number;   // 900–3600
+    heightMm: number;  // 1800–2800
+    depthMm: number;   // 560–660
 }

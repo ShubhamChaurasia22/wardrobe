@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ThreeEvent } from "@react-three/fiber";
-import { Html } from "@react-three/drei";
+import { Html, Environment, ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
 import { LayoutConfig, WallSection } from "../types";
 import WardrobeModel from "./WardrobeModel";
@@ -317,38 +317,59 @@ const Room = ({
                         />
                     </mesh>
 
-                    {/* Enhanced lighting setup */}
-                    <ambientLight intensity={0.2} /> 
-                    
-                    {/* Main directional light for primary shadows */}
-                    <directionalLight 
-                        position={[5, 8, 5]} 
-                        intensity={1.0} 
+                    {/* ── Premium IBL + area lights ── */}
+                    {/* Image-based lighting: makes every metal/glass surface reflect the environment */}
+                    <Environment preset="apartment" />
+
+                    {/* Soft ambient bounce */}
+                    <ambientLight intensity={0.35} color="#fff8f0" />
+
+                    {/* Key light — warm from upper-right, sharp shadows */}
+                    <directionalLight
+                        position={[4, 9, 5]}
+                        intensity={1.6}
+                        color="#fff9f0"
                         castShadow
-                        shadow-mapSize-width={2048}
-                        shadow-mapSize-height={2048}
-                        shadow-camera-far={50}
-                        shadow-camera-left={-15}
-                        shadow-camera-right={15}
-                        shadow-camera-top={15}
-                        shadow-camera-bottom={-15}
-                        shadow-bias={-0.0005}
+                        shadow-mapSize-width={4096}
+                        shadow-mapSize-height={4096}
+                        shadow-camera-far={40}
+                        shadow-camera-left={-12}
+                        shadow-camera-right={12}
+                        shadow-camera-top={12}
+                        shadow-camera-bottom={-12}
+                        shadow-bias={-0.0003}
+                        shadow-normalBias={0.02}
                     />
-                    
-                    {/* Secondary directional light for softer fill */}
-                    <directionalLight 
-                        position={[-4, 6, -4]} 
-                        intensity={0.5} 
-                        castShadow
-                        shadow-mapSize-width={1024}
-                        shadow-mapSize-height={1024}
+
+                    {/* Fill light — cool from opposite side, no shadows */}
+                    <directionalLight
+                        position={[-5, 7, -3]}
+                        intensity={0.55}
+                        color="#ddeeff"
                     />
-                    
-                    {/* Hemisphere light for ambient fill */}
-                    <hemisphereLight 
-                        color="#ffffff"
-                        groundColor="#f0f0f0"
-                        intensity={0.3}
+
+                    {/* Rim / back light — gives depth to wardrobe silhouette */}
+                    <directionalLight
+                        position={[0, 4, -8]}
+                        intensity={0.40}
+                        color="#ffeedd"
+                    />
+
+                    {/* Hemisphere sky/ground GI */}
+                    <hemisphereLight
+                        color="#fff8ef"
+                        groundColor="#d4c4b0"
+                        intensity={0.45}
+                    />
+
+                    {/* Soft contact shadow underneath wardrobes */}
+                    <ContactShadows
+                        position={[0, 0.001, 0]}
+                        opacity={0.45}
+                        scale={20}
+                        blur={2.8}
+                        far={6}
+                        color="#2a1a0a"
                     />
                 </>
             );

@@ -2,6 +2,39 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <script>
+      // Monkeypatch React DevTools to avoid semver crashes with react-three-fiber under React 19
+      (function() {
+        function patchHook(hook) {
+          if (hook && typeof hook.registerRenderer === 'function') {
+            const originalRegister = hook.registerRenderer;
+            hook.registerRenderer = function(renderer) {
+              if (renderer && (!renderer.version || typeof renderer.version !== 'string' || renderer.version.trim() === '')) {
+                renderer.version = '19.0.0';
+              }
+              return originalRegister.apply(this, arguments);
+            };
+          }
+        }
+        const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+        if (hook) {
+          patchHook(hook);
+        } else {
+          let registerVal = undefined;
+          Object.defineProperty(window, '__REACT_DEVTOOLS_GLOBAL_HOOK__', {
+            configurable: true,
+            enumerable: true,
+            get() {
+              return registerVal;
+            },
+            set(val) {
+              registerVal = val;
+              patchHook(registerVal);
+            }
+          });
+        }
+      })();
+    </script>
     <link rel="icon" href="./assets/favicon-32.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#e38c6e" />

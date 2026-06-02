@@ -12,6 +12,9 @@ import { ColorOption, InternalStorageType, LayoutConfig, StoragePosition, DoorSt
 import * as THREE from 'three';
 import './App.css';
 import ReviewPage from './components/ReviewPage';
+import AiVisualizer from "./features/roomVisualizer/AiVisualizer";
+import ToMeasureConfigurator from './components/ToMeasureConfigurator';
+
 
 const CameraIcon = FaCamera as unknown as React.FC;
 const BackIcon = FaArrowLeft as unknown as React.FC;
@@ -68,6 +71,11 @@ const CameraZoomControls: React.FC<CameraZoomControlsProps> = ({ onRegisterZoomC
 };
 
 const App = () => {
+    const [isVisualizerRoute, setIsVisualizerRoute] = useState(window.location.pathname === "/room-visualizer");
+    // ToMeasure replica is the default experience for all non-visualizer routes
+    const [isConfiguratorRoute, setIsConfiguratorRoute] = useState(
+        window.location.pathname !== "/room-visualizer"
+    );
     const [view, setView] = useState<"orbit" | "left" | "back" | "right">("orbit");
     const [dimensions, setDimensions] = useState({
         width: 5,
@@ -619,170 +627,159 @@ const App = () => {
     }, [stage]);
 
     return (
-        <div className="container" style={{ width: "100vw", height: "fit-content", background: "whitesmoke" }}>
-            <Canvas
-                camera={{ position: [8, 5, 8], fov: 45 }}
-                shadows
-                gl={{ preserveDrawingBuffer: true }}
-                style={canvasStyle}
-                id="roomCanvas"
-            >
-                <color attach="background" args={["#f5f5f5"]} />
-                <fog attach="fog" args={["#f5f5f5", 20, 30]} />
-                <Suspense fallback={null}>
-                    <OrbitControls
-                        ref={orbitControlsRef}
-                        enableRotate={allowRotation}
-                        enablePan={allowRotation}
-                        enableZoom={true}
-                        minDistance={4}
-                        maxDistance={20}
-                        target={[0, 1, 0]}
-                        makeDefault
-                    />
-                    <CameraController view={view} />
-                    <CameraZoomControls onRegisterZoomControls={handleRegisterZoomControls} />
-                <Room 
-                        width={dimensions.width}
-                        length={dimensions.length}
-                        height={dimensions.height}
-                    view={view} 
-                    stage={stage} 
-                    selectedModel={selectedModel} 
-                    layoutConfig={layoutConfig} 
-                    onAddWardrobe={handleAddWardrobe}
-                    activeWardrobe={activeWardrobe}
-                    setActiveWardrobe={handleSetActiveWardrobe}
-                />
-                </Suspense>
-            </Canvas>
+        <div className="app-main-wrapper" style={{ width: "100vw", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+            {/* Route: AI Room Visualizer */}
+            {isVisualizerRoute && <AiVisualizer />}
 
-            {/* <div className="camera">
-                <button className="camera-btn" style={{ color: "black", background: "white", border: "black" }} onClick={handleCapture}>
-                    <CameraIcon />
-                </button>
-            </div> */}
-
-            <div className="view-controls">
-                <button className={view === "orbit" ? "active" : ""} onClick={() => setView("orbit")}>
-                    Orbit
-                </button>
-                <button className={view === "left" ? "active" : ""} onClick={() => setView("left")}>
-                    Left Wall
-                </button>
-                <button className={view === "back" ? "active" : ""} onClick={() => setView("back")}>
-                    Back Wall
-                </button>
-                <button className={view === "right" ? "active" : ""} onClick={() => setView("right")}>
-                    Right Wall
-                </button>
-            </div>
-
-            <div className="camera-controls">
-                <button 
-                    onClick={handleZoomIn} 
-                    className="control-btn zoom-in"
-                    aria-label="Zoom In"
-                >
-                    <PlusIcon />
-                </button>
-                <button 
-                    onClick={handleZoomOut} 
-                    className="control-btn zoom-out"
-                    aria-label="Zoom Out"
-                >
-                    <MinusIcon />
-                </button>
-                <button 
-                    onClick={handleResetView} 
-                    className="control-btn reset"
-                    aria-label="Reset View"
-                >
-                    <SyncIcon />
-                </button>
-                <button 
-                    onClick={toggleRotation} 
-                    className={`control-btn rotation ${allowRotation ? 'active' : ''}`}
-                    aria-label="Toggle Rotation"
-                >
-                    <RotateIcon />
-                </button>
-                <button 
-                    onClick={handleCapture}
-                    className="control-btn camera"
-                    aria-label="Take Screenshot"
-                >
-                    <CameraIcon />
-                </button>
-            </div>
-
-            {stage === "size" && <SizeControls dimensions={dimensions} setDimensions={setDimensions} handleBuildWardrobes={handleBuildWardrobes} />}
-            {stage === "wardrobe" && <WardrobeControls setStage={setStage} userName={userName} setUserName={setUserName} />}
-            {stage === "style" && (
-                <StyleWardrobes 
-                    setStage={setStage} 
-                    onSelectModel={handleSelectModel}
-                    selectedHandle={selectedHandle}
-                    setSelectedHandle={handleHandleChange}
-                    hasActiveWardrobe={activeWardrobe !== null}
-                    onSelectWardrobeColor={handleWardrobeColorChange}
-                    onSelectHandleColor={handleHandleColorChange}
-                    selectedWardrobeColor={selectedWardrobeColor}
-                    selectedHandleColor={selectedHandleColor}
-                    handlePosition={selectedHandlePosition}
-                    setHandlePosition={handleHandlePositionChange}
-                    cabinetOption={selectedCabinetOption}
-                    setCabinetOption={handleCabinetOptionChange}
-                    internalStorage={selectedInternalStorage}
-                    setInternalStorage={handleInternalStorageChange}
-                    selectedInternalStorageColor={selectedInternalStorageColor}
-                    onSelectInternalStorageColor={handleInternalStorageColorChange}
-                    onUndo={handleUndo}
-                    onRedo={handleRedo}
-                    canUndo={currentHistoryIndex > 0}
-                    canRedo={currentHistoryIndex < layoutHistory.length - 1}
-                    activeWardrobeType={activeWardrobeType}
-                    storagePosition={selectedStoragePosition}
-                    setStoragePosition={handleStoragePositionChange}
-                    doorStyle={selectedDoorStyle}
-                    setDoorStyle={handleDoorStyleChange}
-                    onBack={handleBackFromStyle}
+            {/* Route: ToMeasure Configurator (default) */}
+            {!isVisualizerRoute && isConfiguratorRoute && (
+                <ToMeasureConfigurator
+                    onBack={() => {
+                        setIsVisualizerRoute(false);
+                        setIsConfiguratorRoute(false);
+                        window.history.pushState({}, "", "/legacy");
+                    }}
                 />
             )}
 
-            {stage === "preview" && (
-                <ReviewPage
-                    setStage={setStage}
-                    selectedWardrobeColor={selectedWardrobeColor}
-                    selectedHandleColor={selectedHandleColor}
-                    selectedHandle={selectedHandle}
-                    doorStyle={selectedDoorStyle} 
-                    activeWardrobeType={activeWardrobeType}
-                    roomDimensions={roomDimensions}
-                    layoutConfig={layoutConfig}
-                    activeWardrobeData={activeWardrobe ? {
-                        modelType: getActiveModelType() || 0,
-                        handleType: selectedHandle,
-                        color: selectedWardrobeColor,
-                        handleColor: selectedHandleColor,
-                        handlePosition: selectedHandlePosition,
-                        cabinetOption: selectedCabinetOption,
-                        internalStorage: selectedInternalStorage,
-                        internalStorageColor: selectedInternalStorageColor,
-                        doorStyle: selectedDoorStyle
-                    } : undefined}
-                    totalPrice="1018.90"
-                />
-            )}
+            {/* Route: Legacy orbit configurator (advanced room-planner mode) */}
+            {!isVisualizerRoute && !isConfiguratorRoute && (
+                <div className="container" style={{ width: "100vw", height: "fit-content", background: "whitesmoke", flex: 1 }}>
+                    {/* Nav to switch back */}
+                    <div style={{ position: "fixed", top: 10, left: 10, zIndex: 2000, display: "flex", gap: 8 }}>
+                        <button
+                            style={{ background: "#374b40", color: "#fff", border: "none", padding: "8px 16px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 600 }}
+                            onClick={() => { setIsConfiguratorRoute(true); window.history.pushState({}, "", "/"); }}
+                        >
+                            ← Configurator
+                        </button>
+                        <button
+                            style={{ background: "#374b40", color: "#fff", border: "none", padding: "8px 16px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 600 }}
+                            onClick={() => { setIsVisualizerRoute(true); window.history.pushState({}, "", "/room-visualizer"); }}
+                        >
+                            AI Visualizer
+                        </button>
+                    </div>
+                    <Canvas
+                        camera={{ position: [8, 5, 8], fov: 45 }}
+                        shadows="soft"
+                        gl={{
+                            preserveDrawingBuffer: true,
+                            antialias: true,
+                            toneMapping: THREE.ACESFilmicToneMapping,
+                            toneMappingExposure: 1.1,
+                            outputColorSpace: THREE.SRGBColorSpace,
+                        }}
+                        dpr={[1, Math.min(window.devicePixelRatio, 2)]}
+                        style={canvasStyle}
+                        id="roomCanvas"
+                    >
+                        <color attach="background" args={["#f0ede8"]} />
+                        <fog attach="fog" args={["#f0ede8", 22, 32]} />
+                        <Suspense fallback={null}>
+                            <OrbitControls
+                                ref={orbitControlsRef}
+                                enableRotate={allowRotation}
+                                enablePan={allowRotation}
+                                enableZoom={true}
+                                minDistance={4}
+                                maxDistance={20}
+                                target={[0, 1, 0]}
+                                makeDefault
+                            />
+                            <CameraController view={view} />
+                            <CameraZoomControls onRegisterZoomControls={handleRegisterZoomControls} />
+                        <Room
+                                width={dimensions.width}
+                                length={dimensions.length}
+                                height={dimensions.height}
+                            view={view}
+                            stage={stage}
+                            selectedModel={selectedModel}
+                            layoutConfig={layoutConfig}
+                            onAddWardrobe={handleAddWardrobe}
+                            activeWardrobe={activeWardrobe}
+                            setActiveWardrobe={handleSetActiveWardrobe}
+                        />
+                        </Suspense>
+                    </Canvas>
 
-            {/* Add back button in review stage */}
-            {stage === "preview" && (
-                <button 
-                    className="back-button" 
-                    onClick={handleBackFromReview}
-                >
-                    <BackIcon />
-                </button>
+                    <div className="view-controls">
+                        <button className={view === "orbit" ? "active" : ""} onClick={() => setView("orbit")}>Orbit</button>
+                        <button className={view === "left"  ? "active" : ""} onClick={() => setView("left")}>Left Wall</button>
+                        <button className={view === "back"  ? "active" : ""} onClick={() => setView("back")}>Back Wall</button>
+                        <button className={view === "right" ? "active" : ""} onClick={() => setView("right")}>Right Wall</button>
+                    </div>
+
+                    <div className="camera-controls">
+                        <button onClick={handleZoomIn}    className="control-btn zoom-in"  aria-label="Zoom In"><PlusIcon /></button>
+                        <button onClick={handleZoomOut}   className="control-btn zoom-out" aria-label="Zoom Out"><MinusIcon /></button>
+                        <button onClick={handleResetView} className="control-btn reset"    aria-label="Reset View"><SyncIcon /></button>
+                        <button onClick={toggleRotation}  className={`control-btn rotation ${allowRotation ? 'active' : ''}`} aria-label="Toggle Rotation"><RotateIcon /></button>
+                        <button onClick={handleCapture}   className="control-btn camera"   aria-label="Take Screenshot"><CameraIcon /></button>
+                    </div>
+
+                    {stage === "size"     && <SizeControls dimensions={dimensions} setDimensions={setDimensions} handleBuildWardrobes={handleBuildWardrobes} />}
+                    {stage === "wardrobe" && <WardrobeControls setStage={setStage} userName={userName} setUserName={setUserName} />}
+                    {stage === "style"    && (
+                        <StyleWardrobes
+                            setStage={setStage}
+                            onSelectModel={handleSelectModel}
+                            selectedHandle={selectedHandle}
+                            setSelectedHandle={handleHandleChange}
+                            hasActiveWardrobe={activeWardrobe !== null}
+                            onSelectWardrobeColor={handleWardrobeColorChange}
+                            onSelectHandleColor={handleHandleColorChange}
+                            selectedWardrobeColor={selectedWardrobeColor}
+                            selectedHandleColor={selectedHandleColor}
+                            handlePosition={selectedHandlePosition}
+                            setHandlePosition={handleHandlePositionChange}
+                            cabinetOption={selectedCabinetOption}
+                            setCabinetOption={handleCabinetOptionChange}
+                            internalStorage={selectedInternalStorage}
+                            setInternalStorage={handleInternalStorageChange}
+                            selectedInternalStorageColor={selectedInternalStorageColor}
+                            onSelectInternalStorageColor={handleInternalStorageColorChange}
+                            onUndo={handleUndo}
+                            onRedo={handleRedo}
+                            canUndo={currentHistoryIndex > 0}
+                            canRedo={currentHistoryIndex < layoutHistory.length - 1}
+                            activeWardrobeType={activeWardrobeType}
+                            storagePosition={selectedStoragePosition}
+                            setStoragePosition={handleStoragePositionChange}
+                            doorStyle={selectedDoorStyle}
+                            setDoorStyle={handleDoorStyleChange}
+                            onBack={handleBackFromStyle}
+                        />
+                    )}
+                    {stage === "preview" && (
+                        <ReviewPage
+                            setStage={setStage}
+                            selectedWardrobeColor={selectedWardrobeColor}
+                            selectedHandleColor={selectedHandleColor}
+                            selectedHandle={selectedHandle}
+                            doorStyle={selectedDoorStyle}
+                            activeWardrobeType={activeWardrobeType}
+                            roomDimensions={roomDimensions}
+                            layoutConfig={layoutConfig}
+                            activeWardrobeData={activeWardrobe ? {
+                                modelType: getActiveModelType() || 0,
+                                handleType: selectedHandle,
+                                color: selectedWardrobeColor,
+                                handleColor: selectedHandleColor,
+                                handlePosition: selectedHandlePosition,
+                                cabinetOption: selectedCabinetOption,
+                                internalStorage: selectedInternalStorage,
+                                internalStorageColor: selectedInternalStorageColor,
+                                doorStyle: selectedDoorStyle
+                            } : undefined}
+                            totalPrice="1018.90"
+                        />
+                    )}
+                    {stage === "preview" && (
+                        <button className="back-button" onClick={handleBackFromReview}><BackIcon /></button>
+                    )}
+                </div>
             )}
         </div>
     );

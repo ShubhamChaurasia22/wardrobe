@@ -1,0 +1,116 @@
+/* SaveDesignModal.css */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+
+.sdm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: sdm-fade-in 0.15s ease;
+}
+
+@keyframes sdm-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sdm-slide-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+.sdm-dialog {
+  font-family: 'Poppins', sans-serif;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+  padding: 28px;
+  width: min(440px, 92vw);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  animation: sdm-slide-up 0.2s ease;
+}
+
+.sdm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sdm-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #374b40;
+  margin: 0;
+  letter-spacing: 0.3px;
+}
+
+.sdm-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid #e0e0e0;
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #666;
+  transition: background 0.15s;
+}
+.sdm-close:hover { background: #e0e0e0; }
+
+.sdm-success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sdm-field { display: flex; flex-direction: column; gap: 8px; }
+
+.sdm-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374b40;
+}
+
+.sdm-input {
+  padding: 12px 14px;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  color: #222;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.sdm-input:focus { border-color: #374b40; }
+
+.sdm-btn {
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 14px 28px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.sdm-btn-primary {
+  background: #374b40;
+  color: #fff;
+}
+.sdm-btn-primary:hover:not(:disabled) { background: #2d3e35; transform: translateY(-1px); }
+.sdm-btn-primary:disabled { opacity: 0.65; cursor: not-allowed; }
+.sdm-btn-primary.loading { background: #5a7a65; }
+
+.sdm-note {
+  font-size: 12px;
+  color: #999;
+  margin: 0;
+  text-align: center;
+}
